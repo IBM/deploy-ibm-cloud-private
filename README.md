@@ -3,6 +3,7 @@
 Instructions:
 * [Deploy in local VMs using Vagrant](#deploy-using-vagrant)
 * [Deploy in Softlayer VMs using Ansible](#deploy-on-ibm-cloud-softlayer)
+* [Deploy in OpenStack using Terraform](#deploy-using-openstack-and-terraform)
 
 
 ## Deploy using Vagrant:
@@ -262,3 +263,8 @@ NAME             STATUS                     AGE       VERSION
 ```
 
 From here you should be able to interact with ICP via either the Web UI or the `kubectl` command.
+
+## deploy-using-openstack-and-terraform
+
+Please refer to the embedded README document in *terraform_modules/openstack*
+for detailed deployment steps.
