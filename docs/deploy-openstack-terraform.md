@@ -56,3 +56,5 @@ Instructions
   the added step of setting the **insecure=false** variable in the **main.tf**
   openstack provider, and the OS_CACERT environment variable.
   (https://www.terraform.io/docs/providers/openstack/#ca_certfile)
+
+See [Accessing IBM Cloud Private](/README.md#accessing-ibm-cloud-private) for next steps.

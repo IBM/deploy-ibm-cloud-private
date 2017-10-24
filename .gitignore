@@ -7,3 +7,9 @@ cfc*
 license_accepted
 cluster/ssh_key
 cluster/ssh_key.pub
+
+
+# terraform
+.tfstate
+.backup
+.terraform*
