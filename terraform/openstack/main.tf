@@ -39,7 +39,6 @@ resource "openstack_compute_instance_v2" "icp-worker-vm" {
     key_pair  = "${openstack_compute_keypair_v2.icp-key-pair.name}"
 
     network {
-        uuid = "${var.openstack_network_id}"
         name = "${var.openstack_network_name}"
     }
 
@@ -63,7 +62,6 @@ resource "openstack_compute_instance_v2" "icp-master-vm" {
     }
 
     network {
-        uuid = "${var.openstack_network_id}"
         name = "${var.openstack_network_name}"
     }
 

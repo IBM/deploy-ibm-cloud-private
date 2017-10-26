@@ -53,11 +53,6 @@ variable "openstack_flavor_id_worker_node" {
     default = "my_flavor_id"
 }
 
-variable "openstack_network_id" {
-    description = "The ID of the network to be used for deploy operations."
-    default = "my_network_id"
-}
-
 variable "openstack_network_name" {
     description = "The name of the network to be used for deploy operations."
     default = "my_network_name"
