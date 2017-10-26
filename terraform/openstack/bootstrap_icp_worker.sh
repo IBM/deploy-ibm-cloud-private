@@ -33,4 +33,12 @@
 IP=`/sbin/ifconfig eth0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}'`
 /bin/echo "${IP} $(hostname)" >> /etc/hosts
 
+# Make sure we can ssh as root w/ keys
+# This removes 'command=' when root login is disabled by cloud-init
+/bin/sed -ir 's#command="ech.*[^\]"##g' ~/.ssh/authorized_keys
+# Make sure root login is allowed in the sshd config
+/bin/grep -E "^PermitRootLogin\s*(yes|prohibit-password)$" /etc/ssh/sshd_config || (\
+/bin/sed -i 's/^PermitRootLogin.*/PermitRootLogin prohibit-password/g' /etc/ssh/sshd_config; \
+/bin/systemctl restart ssh)
+
 exit 0
