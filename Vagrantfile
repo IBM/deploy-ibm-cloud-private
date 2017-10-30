@@ -51,22 +51,6 @@ docker_registry_port = '5000'
 #                  DO NOT MODIFY ANYTHING BELOW THIS POINT                    #
 ###############################################################################
 
-# the following hosts will be accessible from your laptop once provisioning is complete
-cfc_hosts = "
-[master]
-#{base_segment}.100 kubelet_extra_args=[\"--image-gc-high-threshold=100\", \"--image-gc-low-threshold=100\", \"--cgroup-driver=systemd\"] kube_proxy_extra_args=[\"--proxy-mode=userspace\"]
-
-[worker]
-#{base_segment}.101 kubelet_extra_args=[\"--cgroup-driver=systemd\"] kube_proxy_extra_args=[\"--proxy-mode=userspace\"]
-#{base_segment}.102 kubelet_extra_args=[\"--cgroup-driver=systemd\"] kube_proxy_extra_args=[\"--proxy-mode=userspace\"]
-
-[proxy]
-#{base_segment}.100 kubelet_extra_args=[\"--image-gc-high-threshold=100\", \"--image-gc-low-threshold=100\", \"--cgroup-driver=systemd\"] kube_proxy_extra_args=[\"--proxy-mode=userspace\"]
-
-[management]
-#{base_segment}.111 kubelet_extra_args=[\"--image-gc-high-threshold=100\", \"--image-gc-low-threshold=100\", \"--cgroup-driver=systemd\"] kube_proxy_extra_args=[\"--proxy-mode=userspace\"]
-"
-
 cfc_config = "
 ---
 # Network in IPv4 CIDR format
@@ -85,9 +69,6 @@ proxy_access_ip: #{base_segment}.100
 
 # Config federation cluster
 federation_enabled: false
-
-# set calico tunnel mtu 
-calico_tunnel_mtu: 8940
 
 ansible_user: vagrant
 ansible_become: true
@@ -115,6 +96,9 @@ private_registry_enabled: false
 private_registry_server: placeholder.com
 docker_username: placeholder
 docker_password: placeholder
+
+ingress_controller:
+  disable-access-log: 'true'
 "
 
 vm_name = "IBM-Cloud-Private-dev-edition"
@@ -253,7 +237,7 @@ sudo apt-get update --yes --quiet
 sudo apt-get install --yes --quiet --target-release=xenial-backports lxd lxd-client bridge-utils dnsmasq thin-provisioning-tools \
     curl linux-image-extra-$(uname -r) linux-image-extra-virtual apt-transport-https ca-certificates software-properties-common \
     docker-ce python-setuptools python-pip build-essential python-dev nfs-kernel-server nfs-common aufs-tools ntp
-sudo sed -i 's|ExecStart=/usr/bin/dockerd -H fd://|ExecStart=/usr/bin/dockerd -H fd:// --max-concurrent-downloads 10 --mtu=9000|g' /etc/systemd/system/multi-user.target.wants/docker.service
+sudo sed -i 's|ExecStart=/usr/bin/dockerd -H fd://|ExecStart=/usr/bin/dockerd -H fd:// --max-concurrent-downloads 10|g' /etc/systemd/system/multi-user.target.wants/docker.service
 sudo systemctl daemon-reload
 sudo systemctl restart docker
 sudo -H pip install --upgrade pip
@@ -262,6 +246,17 @@ sudo usermod -aG lxd vagrant
 newgrp lxd
 sudo usermod -aG docker vagrant
 newgrp docker
+sudo bash -c 'cat > /etc/docker/daemon.json' <<'EOF'
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m"
+  }
+  #{docker_mirror}
+}
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart docker
 sudo bash -c 'cat > /etc/ntp.conf' <<'EOF'
 server time1.google.com
 server time2.google.com
@@ -269,12 +264,6 @@ server time3.google.com
 server time4.google.com
 EOF
 sudo systemctl restart ntp
-SCRIPT
-
-configure_docker_mirror = <<SCRIPT
-echo '{ "registry-mirrors": ["http://#{cache_host}:#{docker_registry_port}"] }' | sudo tee /etc/docker/daemon.json
-sudo systemctl daemon-reload
-sudo systemctl restart docker
 SCRIPT
 
 add_storage_vol = <<SCRIPT
@@ -320,8 +309,6 @@ SCRIPT
 
 configure_lxd = <<SCRIPT
 sudo bash -c 'cat >> /etc/network/interfaces' <<'EOF'
-    post-up ifconfig enp0s3 mtu 9000
-    post-up ifconfig enp0s8 mtu 9000
     post-up ifconfig enp0s8 promisc on
 
 iface enp0s8 inet manual
@@ -343,7 +330,6 @@ networks:
       bridge.driver: native
       bridge.external_interfaces: enp0s8
       bridge.mode: standard
-      bridge.mtu: 9000
       ipv4.address: "#{base_segment}.100/24"
       ipv4.dhcp: true
       ipv4.dhcp.ranges: "#{base_segment}.100-#{base_segment}.254"
@@ -373,7 +359,6 @@ profiles:
         config:
           - type: physical
             name: eth0
-            mtu: 9000
             subnets:
               - type: dhcp
       user.user-data: |
@@ -440,7 +425,7 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
           - [ mkdir, -p, /var/lib/kubelet ]
           - [ mount, -o, bind, /var/lib/kubelet, /var/lib/kubelet ]
           - [ mount, --make-shared, /var/lib/kubelet ]
-          - sed -i 's|ExecStart=/usr/bin/dockerd -H fd://|ExecStart=/usr/bin/dockerd -H fd:// --max-concurrent-downloads 10 --mtu=9000|g' /etc/systemd/system/multi-user.target.wants/docker.service
+          - sed -i 's|ExecStart=/usr/bin/dockerd -H fd://|ExecStart=/usr/bin/dockerd -H fd:// --max-concurrent-downloads 10|g' /etc/systemd/system/multi-user.target.wants/docker.service
           - [ systemctl, daemon-reload ]
           - [ systemctl, restart, docker ]
           - [ pip, install, --upgrade, pip ]
@@ -451,6 +436,10 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
         write_files:
           - content: |
               {
+                "log-driver": "json-file",
+                "log-opts": {
+                  "max-size": "10m"
+                }
                 #{docker_mirror}
               }
             path: /etc/docker/daemon.json
@@ -460,7 +449,6 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
         nictype: bridged
         parent: lxdbr0
         type: nic
-        mtu: 9000
       root: 
         path: /
         pool: lxd
@@ -482,7 +470,6 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
         nictype: bridged
         parent: lxdbr0
         type: nic
-        mtu: 9000
         ipv4.address: #{base_segment}.101
   - name: cfc-worker2
     config: 
@@ -498,8 +485,22 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
         nictype: bridged
         parent: lxdbr0
         type: nic
-        mtu: 9000
         ipv4.address: #{base_segment}.102
+  - name: cfc-worker3
+    config: 
+      boot.autostart.delay: 15
+      boot.autostart.priority: 4
+      user.meta-data: |
+        hostname: cfc-worker3
+        fqdn: cfc-worker3.icp
+        manage_etc_hosts: true
+    devices:
+      eth0: 
+        name: eth0
+        nictype: bridged
+        parent: lxdbr0
+        type: nic
+        ipv4.address: #{base_segment}.103
   - name: cfc-manager1
     config: 
       boot.autostart.delay: 15
@@ -514,12 +515,9 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
         nictype: bridged
         parent: lxdbr0
         type: nic
-        mtu: 9000
         ipv4.address: #{base_segment}.111
 EOF
 sudo sed -i 's/127.0.0.1\tmaster.icp/#{base_segment}.100\tmaster.icp/g' /etc/hosts
-sudo ifconfig enp0s3 mtu 9000
-sudo ifconfig enp0s8 mtu 9000
 SCRIPT
 
 bring_up_icp_host_interface = <<SCRIPT
@@ -532,7 +530,22 @@ SCRIPT
 
 configure_icp_install = <<SCRIPT
 mkdir -p /home/vagrant/cluster
-echo "#{cfc_hosts}" > /home/vagrant/cluster/hosts
+
+cat > /home/vagrant/cluster/hosts <<'EOF'
+[master]
+#{base_segment}.100 kubelet_extra_args='["--eviction-hard=memory.available<1Mi,nodefs.available<1Mi,nodefs.inodesFree<1%,imagefs.available<1Mi,imagefs.inodesFree<1%", "--image-gc-high-threshold=100%", "--image-gc-low-threshold=100%"]'
+
+[worker]
+#{base_segment}.101
+#{base_segment}.102
+
+[proxy]
+#{base_segment}.100 kubelet_extra_args='["--eviction-hard=memory.available<1Mi,nodefs.available<1Mi,nodefs.inodesFree<1%,imagefs.available<1Mi,imagefs.inodesFree<1%", "--image-gc-high-threshold=100%", "--image-gc-low-threshold=100%"]'
+
+[management]
+#{base_segment}.111 kubelet_extra_args='["--eviction-hard=memory.available<1Mi,nodefs.available<1Mi,nodefs.inodesFree<1%,imagefs.available<1Mi,imagefs.inodesFree<1%", "--image-gc-high-threshold=100%", "--image-gc-low-threshold=100%"]'
+EOF
+
 echo "#{rsa_private_key}" > /home/vagrant/cluster/ssh_key
 echo '#{cfc_config}' > /home/vagrant/cluster/config.yaml
 sed -i "s/image_tag\: latest/image_tag\: #{version}/g" /home/vagrant/cluster/config.yaml
@@ -810,7 +823,7 @@ sudo iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
 sudo ip link set dev enp0s8 up
 echo "nameserver #{base_segment}.100" | sudo tee /etc/resolv.conf > /dev/null
 echo "search icp" | sudo tee --append /etc/resolv.conf > /dev/null
-sudo docker ps -a | grep Exit | cut -d ' ' -f 1 | xargs sudo docker rm
+sudo docker ps -a | grep Exit | cut -d ' ' -f 1 | xargs sudo docker rm > /dev/null || true
 EOF
 sudo chmod 744 /usr/local/bin/icp-ce-startup.sh
 
@@ -834,7 +847,7 @@ sudo apt-get install -y shellinabox &> /dev/null
 SCRIPT
 
 ensure_services_up = <<SCRIPT
-sleep 30
+sleep 60
 echo "Waiting for all IBM Cloud Private Services to start..."
 count=0
 while [[ '' != $(kubectl get pods --namespace kube-system | sed -n '1!p' | grep -v Running) ]]
@@ -944,9 +957,6 @@ Vagrant.configure(2) do |config|
   	config.vm.provision "shell", privileged: false, inline: configure_apt_proxy, keep_color: true, name: "configure_apt_proxy"
   end
   config.vm.provision "shell", privileged: false, inline: install_icp_prereqs, keep_color: true, name: "install_icp_prereqs"
-  if use_cache.downcase.eql? 'true'
-  	config.vm.provision "shell", privileged: false, inline: configure_docker_mirror, keep_color: true, name: "configure_docker_mirror"
-  end
   config.vm.provision "shell", privileged: false, inline: add_storage_vol, keep_color: true, name: "add_storage_vol"
   config.vm.provision "shell", privileged: false, inline: setup_nfs_shares, keep_color: true, name: "setup_nfs_shares"
   config.vm.provision "shell", privileged: false, inline: configure_nat_iptable_rules, keep_color: true, name: "configure_nat_iptable_rules"
@@ -956,9 +966,10 @@ Vagrant.configure(2) do |config|
 
   config.vm.define "icp" do |icp|
     icp.vm.box = "bento/ubuntu-16.04"
+    icp.vm.box_version = "201708.22.0"
     icp.vm.hostname = "master.icp"
     icp.vm.box_check_update = false
-    icp.vm.network "private_network", ip: "#{base_segment}.100", adapter_ip: "#{base_segment}.1", netmask: "255.255.255.0", mtu: 9000, auto_config: false
+    icp.vm.network "private_network", ip: "#{base_segment}.100", adapter_ip: "#{base_segment}.1", netmask: "255.255.255.0", auto_config: false
     icp.vm.provider "virtualbox" do |virtualbox|
       virtualbox.name = "#{vm_name}"
       virtualbox.gui = false
