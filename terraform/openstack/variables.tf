@@ -63,7 +63,32 @@ variable "openstack_ssh_key_file" {
     default = "<path to the private SSH key file>"
 }
 
+variable "icp_install_user" {
+    description = "The user with sudo access across nodes (users section of cloud-init)"
+    default = "ubuntu"
+}
+
+variable "icp_install_user_password" {
+   description = "Password for sudo access (leave empty if using passwordless sudo access)"
+   default = ""
+}
 variable "icp_num_workers" {
     description = "The number of ICP worker nodes to provision."
-    default = 2
+    default = 1
+}
+variable "icp_edition" {
+    description = "ICP edition - either 'ee' for Enterprise Edition or 'ce' for Community Edition"
+    default = "ce"
+}
+variable "icp_version" {
+    description = "ICP version number"
+    default = "2.1.0"
+}
+variable "icp_architecture" {
+    description = "x86 or ppc64le"
+    default = "ppc64le"
+}
+variable "icp_download_location" {
+    description = "HTTP wget location for ICP Enterprise Edition - ignored for community edition"
+    default = "http://LOCATION_OF_ICP_ENTERPRISE_EDITION.tar.gz"
 }
