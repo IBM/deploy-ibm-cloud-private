@@ -24,23 +24,25 @@ Click on `admin` on the top right hand corner of the screen to bring up a menu a
 Copy and Paste the provided commands into a shell:
 
 ```bash
-kubectl config set-cluster cfc --server=https://169.46.198.216:8001 --insecure-skip-tls-verify=true
-kubectl config set-context cfc --cluster=cfc
-kubectl config set-credentials user --token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjY5NjI2ZDJkNjM2NjYzMmQ3MzY1NzI3NjY5NjM2NTJkNmI2NTc5NjkiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJjZmMtc2VydmljZSIsImV4cCI6MTUwNTc5MTMwOCwiaWF0IjoxNTA1NzQ4MTA4LCJpc3MiOiJodHRwczovL21hc3Rlci5jZmM6ODQ0My9hY3MvYXBpL3YxL2F1dGgiLCJwcm9qZWN0cyI6WyJkZWZhdWx0Il0sInN1YiI6ImFkbWluIn0.wnjScyVuUUJyqt7AW4J6PrZ135dp8nWQTUmAqcjja15vaY4GQsu2lpZTn6AhmzQNWYfaYcLwc1ApcRBAB3h9oQlJOpSMI96U9XDYcMi1_i1AX8zN1EAFnklURK6TKPMy2OfNx8KOoWHTtRqBm-NDcla25aCpIrdHi7P9OPB2dcrHv7cYLBNwB6zWnzkM1EnRXYQIXDtKs1iX1K-A5Ph0Si3LIUg3LOjNML3Yn2D7vCWdItaGs86EE-2R2VVkYsLO19G09KwcLnhf5CmxxTjPDp2dOQjfwIFWbTmVQCFORtqj2Gt3X2EQFBwSru-e9M-fYcUiv6bqpd7WLufo-7q3bg
-kubectl config set-context cfc --user=user --namespace=default
-kubectl config use-context cfc
+kubectl config set-cluster mycluster.icp --server=https://192.168.27.100:8001 --insecure-skip-tls-verify=true
+kubectl config set-context mycluster.icp-context --cluster=mycluster.icp
+kubectl config set-credentials mycluster.icp-user --token=eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF0X2hhc2giOiJFaGllVkp1T3VtNEVyWVI0d2NjUThBIiwiaXNzIjoiaHR0cHM6Ly9teWNsdXN0ZXIuaWNwOjk0NDMvb2lkYy9lbmRwb2ludC9PUCIsImF1ZCI6ImM2ZDk3NTdmYWY0NmIyNDBkNTJjNDkyMjg0YzQxYmY5IiwiZXhwIjoxNTA5NjgxNjc0LCJpYXQiOjE1MDk2Mzg0NzR9.oLvpbbmJLnxf-ALAMc7vku-EU7ucp1JEixYf6OALkk76oNsVYhVVWKMyfZWU2IMH98ivo1INAU5SRl2w2bQjvwkzMsa3UScu1XR7GFm3XOl4SUWOGFCxfjxaR7n0zEIH0kaLvsrNUIiHl3kE70HuYcNU1MsOwq9u3NfzaDZnHQFu8NFOeGpsI26GlKrqlT_ROz7bsuQ1-M5KOMV4vjKKL6o95d_Ab0Nb7HXn58jXONRQNEQYPCUWVBJQDbyzq-3zWOFUz_ev8YamQgCDOdaU-Gk2MmiInDAPPvExG6vasBQ4fXyWpoeprPtwkCOAb-bEHFdLL4v4fwQK9RfLS4ZyTQ
+kubectl config set-context mycluster.icp-context --user=mycluster.icp-user --namespace=default
+kubectl config use-context mycluster.icp-context
 ```
 
 Check that you can run some basic commands against the cluster:
 
 ```bash
-$ Client Version: version.Info{Major:"1", Minor:"6", GitVersion:"v1.6.4", GitCommit:"d6f433224538d4f9ca2f7ae19b252e6fcb66a3ae", GitTreeState:"clean", BuildDate:"2017-05-19T18:44:27Z", GoVersion:"go1.7.5", Compiler:"gc", Platform:"linux/amd64"}
-Server Version: version.Info{Major:"1", Minor:"5", GitVersion:"v1.5.2", GitCommit:"08e099554f3c31f6e6f07b448ab3ed78d0520507", GitTreeState:"clean", BuildDate:"2017-02-05T08:03:16Z", GoVersion:"go1.7.5", Compiler:"gc", Platform:"linux/amd64"}
+$ kubectl version
+Client Version: version.Info{Major:"1", Minor:"7", GitVersion:"v1.7.3", GitCommit:"2c2fe6e8278a5db2d15a013987b53968c743f2a1", GitTreeState:"clean", BuildDate:"2017-08-03T07:00:21Z", GoVersion:"go1.8.3", Compiler:"gc", Platform:"darwin/amd64"}
+Server Version: version.Info{Major:"1", Minor:"7+", GitVersion:"v1.7.3-7+154699da4767fd", GitCommit:"154699da4767fd4225cbaa91cc26abd71bc853c7", GitTreeState:"clean", BuildDate:"2017-08-28T06:41:56Z", GoVersion:"go1.8.3", Compiler:"gc", Platform:"linux/amd64"}
 $ kubectl get nodes
-NAME             STATUS                     AGE       VERSION
-169.46.198.195   Ready                      34m       v1.7.3-7+154699da4767fd
-169.46.198.209   Ready                      34m       v1.7.3-7+154699da4767fd
-169.46.198.216   Ready,SchedulingDisabled   36m       v1.7.3-7+154699da4767fd
+NAME             STATUS    AGE       VERSION
+192.168.27.100   Ready     23h       v1.7.3-7+154699da4767fd
+192.168.27.101   Ready     23h       v1.7.3-7+154699da4767fd
+192.168.27.102   Ready     23h       v1.7.3-7+154699da4767fd
+192.168.27.111   Ready     23h       v1.7.3-7+154699da4767fd
 ```
 
 From here you should be able to interact with ICP via either the Web UI or the `kubectl` command.
