@@ -49,7 +49,7 @@
     - name: install extra packages
       apt:
         name: "{{ item }}"
-      with_items: [dnsmasq,vim,python-pip]
+      with_items: [dnsmasq,vim,python-pip,nfs-common]
       when: ansible_os_family == 'Debian'
 
     - name: disable resolvconf updates
