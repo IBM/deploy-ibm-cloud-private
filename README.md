@@ -6,6 +6,7 @@ Instructions:
 * [Deploy in Softlayer VMs using Ansible](docs/deploy-softlayer-ansible.md)
 * [Deploy in Softlayer VMs using Terraform](docs/deploy-softlayer-terraform.md)
 * [Deploy in OpenStack using Terraform](docs/deploy-openstack-terraform.md)
+* [Optional - add NFS dynamic provsioner to your cluster](docs/deploy-nfs-provisioner.md)
 
 
 ## Accessing IBM Cloud Private
@@ -43,8 +44,3 @@ NAME             STATUS                     AGE       VERSION
 ```
 
 From here you should be able to interact with ICP via either the Web UI or the `kubectl` command.
-
-## deploy-using-openstack-and-terraform
-
-Please refer to the embedded README document in *terraform/openstack*
-for detailed deployment steps.
