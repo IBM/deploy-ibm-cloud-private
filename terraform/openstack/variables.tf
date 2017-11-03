@@ -53,19 +53,14 @@ variable "openstack_flavor_id_worker_node" {
     default = "my_flavor_id"
 }
 
-variable "openstack_network_id" {
-    description = "The ID of the network to be used for deploy operations."
-    default = "my_network_id"
-}
-
 variable "openstack_network_name" {
     description = "The name of the network to be used for deploy operations."
     default = "my_network_name"
 }
 
 variable "openstack_ssh_key_file" {
-    description = "The path to the SSH key file."
-    default = "<path to SSH key file>"
+    description = "The path to the private SSH key file."
+    default = "<path to the private SSH key file>"
 }
 
 variable "icp_num_workers" {
