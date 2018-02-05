@@ -16,7 +16,7 @@ _Note: It will likely give you a certificate error as ICP was installed with a s
 
 ![ICP Login Page](images/icp-login-page.png)
 
-Click on `admin` on the top right hand corner of the screen to bring up a menu and select "Configure Client".
+Click on `admin` on the top right hand corner of the screen to bring up a menu and select `Configure Client`.
 
 ![ICP Configure Client](images/icp-configure-client.png)
 
