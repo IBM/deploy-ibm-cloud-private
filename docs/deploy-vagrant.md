@@ -5,8 +5,6 @@ In order to successfully run the `Vagrantfile` your laptop will need the followi
 
  - 10GiB of RAM
    -  16GiB of RAM total on your laptop will be required 
-   -  Change the [`memory`](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/Vagrantfile#L15) setting in the `Vagrantfile` 
-   -  Can attempt with less memory but not guarentees
  - 50GiB of free disk space
  - VirtualBox 5.2 [Download](https://www.virtualbox.org/wiki/Downloads)
  - Vagrant 2.0 [Download](https://www.vagrantup.com/downloads.html)
