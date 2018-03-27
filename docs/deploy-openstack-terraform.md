@@ -1,14 +1,13 @@
-=======
 Summary
 =======
 
 This Terraform sample will perform a simple IBM Cloud Private (ICP) deployment.
 By default, it will install the Community Edition, but you can also configure
 it to install the Enterprise Edition as well. It is currently setup to deploy
-an ICP master node (also serves as the boot and proxy node) and a
+an ICP master node (also serves as the boot, proxy, and management node) and a
 user-configurable number of ICP worker nodes. This sample does not supersede
-the official ICP deployment instructions, it merely serves as a simple way to
-provision an ICP cluster within your infrastructure for experimental purposes.
+the official ICP deployment instructions (as of version 2.1.0), it merely serves
+as a simple way to provision an ICP cluster within your infrastructure.
 
 Assumptions
 -----------
@@ -25,7 +24,7 @@ Prerequisites
 * You have an instance of OpenStack (or PowerVC) running; the OpenStack version
   should be Ocata or newer
 * You have an Ubuntu 16.04 image loaded within OpenStack with minimally a
-  **120 GB root disk**; this will be used as the baseline image for all of the
+  **100 GB root disk**; this will be used as the baseline image for all of the
   ICP nodes
 
 Instructions
@@ -35,27 +34,26 @@ Instructions
 * On your Terraform workstation, generate an SSH key pair to be pushed (via
   Terraform) to all of the nodes; e.g., you can [**ssh-keygen -t rsa**] to
   create this from a Linux or macOS workstation (this will be referenced in
-  the subsequent step when you're updating **variables.tf**)
+  the subsequent step when you're updating **variables.tf**).
+* Your Ubuntu image should have a default user (often `ubuntu`) that has
+  sudo (root) access in order to provision the install (configured via
+  **variables.tf**).
 * Edit the contents of **variables.tf** to align with your OpenStack
   (or PowerVC) deployment (make sure you're using an OpenStack flavor with
   sufficient resources; a minimum of 4 vcpus and 16 GB of memory is recommended)
-* Within the **bootstrap_icp_(ce|ee)_master.sh** shell script, change the ICP
-  version tag to align with whatever release of ICP that you want to deploy
 * If you want to install ICP Enterprise Edition, you need to:
 
   * Place the ICP tar ball in an HTTP(S) accessible location (i.e., so that
     wget can be used to download the file)
-  * Change the *icp-master-vm* resource within the **main.tf** file to call the
-    **bootstrap_icp_ee_master.sh** shell script
-  * Update the *ICP_IMAGE_HTTP_LOCATION* variable within the **bootstrap_icp_ee_master.sh**
-    shell script to point to the ICP tar ball
-  * Update the *ICP_DOCKER_IMAGE* variable within the **bootstrap_icp_ee_master.sh**
-    shell script to refer to the correct Docker image (i.e., x86 vs. ppc64le)
-* Run [**terraform apply -parallelism=2**] to start the ICP deployment
+  * Update the *icp_architecture*, *icp_edition*, and *icp_download_location*
+    variables within the **variables.tf** file to point to appropriate ICP
+    architecture, edition, and tar ball.
+* Run [**terraform apply**] to start the ICP deployment
 * Sit back and relax... within about 30-40 minutes, you should be able to
   access your ICP cluster at https://<ICP_MASTER_IP_ADDRESS>:8443
 * If you're using this for anything beyond a proof-of-concept, please also take
-  the added step of setting *insecure=false* and set the *cacert* option to the
-  contents of the OpenStack certificate
+  the added step of setting the **insecure=false** variable in the **main.tf**
+  OpenStack provider, and the OS_CACERT environment variable.
+  (https://www.terraform.io/docs/providers/openstack/#ca_certfile)
 
 See [Accessing IBM Cloud Private](/README.md#accessing-ibm-cloud-private) for next steps.

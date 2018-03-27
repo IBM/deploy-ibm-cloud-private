@@ -8,16 +8,60 @@
 
 ### Deploy
 
-Open [terraform/ibmcloud/variables.tf](../terraform/ibmcloud/variables.tf) in your preferred text
-editor and update the following variables to suit your environment:
+You will need to collect some information from the Softlayer admin page before you can proceeed. Here's how to get those details:
 
-* sl_username
-* sl_api_key
-* key_name
-* key_file
-* datacenter
+_Softlayer username and API key_
 
-_Make sure the private key that matches your `key_name` is added to your ssh-agent._
+* Go to the [Softlayer Control page](https://control.softlayer.com/)
+* Look at the top right and note which account you're logged in as.  You may have more than one account. IBMers will likely have at least a default personal account and an account from their organization. Pick one that has rights to provision capacity in Softlayer.
+* Now go [edit your user profile](https://control.softlayer.com/account/user/profile).
+* Scroll down to the bottom and look for the section _API Access Information_
+* You will have an "API Username" "Authentication key". The "API Username" will be something like 9999999_shortname@us.ibm.com.
+* Copy both of these values into a local text file.  You will need them when you configure the Terraform script.  If you don't have an authentication key, [follow these instructions](https://knowledgelayer.softlayer.com/procedure/generate-api-key)
+* Next, go look at your [devices in Softlayer](https://control.softlayer.com/devices)
+* Pick a device and look at the details.
+* Halfway down the list of details, you will see the _Network_ section in two columns. The public subnet VLAN is on the left, the private subnet VLAN is on the right.
+* The subnet will have a name like `wdc01.fcr05a.918`. The first substring identifies the data center. In this case it's data center 01 in Washington DC. Take note of that data center identifier and store it in the same place where you put you Softlayer user ID and API key.
+* Next, click on the _public_ VLAN link.  You'll go to a page such as [https://control.softlayer.com/network/vlans/2262109](https://control.softlayer.com/network/vlans/2262109)
+* That long number at the end of the URL is the public VLAN ID. Record that number.
+* Click the Back button on your browser to get back to the device summary page.
+* Click on the _private_ VLAN link and perform the same data collection.
+* Record the ID of the private VLAN
+* You should now have your Softlayer user ID, API key, data center ID, public VLAN ID, and private VLAN ID.
+* You're done with the Softlayer admin page. Go ahead and close the browser.
+
+_SSH Keys_
+
+* Go back to the a command line and change directory to where you cloned the git repository.
+* The root of the git repo is `deploy-ibm-cloud-private`. From there, cd to `terraform/ibmcloud`
+* Now you will create an ssh key pair and register it with Softlayer.
+* The name you give the key in Softlayer has to be unique. This can be tricky if you are using a shared account.  You can't just call it `ssh-key`.
+* For now, use your IBM shortname to make the key ID unique. For the following steps, replace _shortname_ with your own actual shortname.
+* On the command line, enter
+```bash
+ssh-keygen -f shortname_ssh_key -P ""
+```
+
+* You will end up with two files in the current directory, `shortname_ssh_key` (the private key) and `shortname_ssh_key.pub` (the public key)
+* Next, you'll register the public key with Softlayer by executing
+```bash
+slcli sshkey add -f shortname_ssh_key.pub shortname_ssh_key
+```
+
+* Assuming you're successful, you should see a message saying `SSH key added` followed by the hex signature.
+* Finally, you will take all of the above information and put it into the `variables.tf` file. Populate the fields as per this table:
+
+variable name | data
+--------------|-------------
+sl_username |  API Username
+sl_api_key | Authentication key
+key_name  | shortname_ssh_key
+key_file | full path to the private key file
+datacenter  | data center ID, e.g. wdc01
+public_vlan_id | 7-digit public VLAN ID
+private_vlan_id | 7-digit public VLAN ID
+
+* Save your changes to variables.tf and proceed.
 
 Initialize Terraform:
 

@@ -23,6 +23,8 @@ resource "softlayer_virtual_guest" "icpmaster" {
     network_speed         = "${var.master["network_speed"]}"
     hourly_billing        = "${var.master["hourly_billing"]}"
     private_network_only  = "${var.master["private_network_only"]}"
+    public_vlan_id        = "${var.public_vlan_id}"
+    private_vlan_id        = "${var.private_vlan_id}"
 
     user_metadata = "{\"value\":\"newvalue\"}"
 
@@ -45,6 +47,8 @@ resource "softlayer_virtual_guest" "icpworker" {
     network_speed         = "${var.worker["network_speed"]}"
     hourly_billing        = "${var.worker["hourly_billing"]}"
     private_network_only  = "${var.worker["private_network_only"]}"
+    public_vlan_id        = "${var.public_vlan_id}"
+    private_vlan_id        = "${var.private_vlan_id}"
 
     user_metadata = "{\"value\":\"newvalue\"}"
 
@@ -67,6 +71,8 @@ resource "softlayer_virtual_guest" "icpproxy" {
     network_speed         = "${var.proxy["network_speed"]}"
     hourly_billing        = "${var.proxy["hourly_billing"]}"
     private_network_only  = "${var.proxy["private_network_only"]}"
+    public_vlan_id        = "${var.public_vlan_id}"
+    private_vlan_id        = "${var.private_vlan_id}"
 
     user_metadata = "{\"value\":\"newvalue\"}"
 
@@ -74,7 +80,7 @@ resource "softlayer_virtual_guest" "icpproxy" {
 }
 
 module "icpprovision" {
-    source = "github.com/ibm-cloud-architecture/terraform-module-icp-deploy"
+    source = "github.com/ibm-cloud-architecture/terraform-module-icp-deploy?ref=1.0.0"
 
     icp-master = ["${softlayer_virtual_guest.icpmaster.ipv4_address}"]
     icp-worker = ["${softlayer_virtual_guest.icpworker.*.ipv4_address}"]
@@ -91,10 +97,11 @@ module "icpprovision" {
 
     # Because SoftLayer private network uses 10.0.0.0/8 range,
     # we will override default ICP network configuration
-    # to be sure to avoid conflict
+    # to be sure to avoid conflict. Allow override of default admin password.
     icp_configuration = {
       "network_cidr"              = "192.168.0.0/16"
       "service_cluster_ip_range"  = "172.16.0.1/24"
+      "default_admin_password"    = "${var.default_admin_password}"
     }
 
     # We will let terraform generate a new ssh keypair

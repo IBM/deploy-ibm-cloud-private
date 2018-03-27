@@ -3,12 +3,13 @@
 #### Requirements
 In order to successfully run the `Vagrantfile` your laptop will need the following:
 
- - 4GiB of RAM
-   -  8GiB will give better performance  
-   -  Change the [`memory`](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/Vagrantfile#L15) setting in the `Vagrantfile`
- - 20GiB of free disk space
- - VirtualBox 5.1.28 [Download](https://www.virtualbox.org/wiki/Downloads)
- - Vagrant 2.0.0 [Download](https://www.vagrantup.com/downloads.html)
+ - 10GiB of RAM
+   -  16GiB of RAM total on your laptop will be required 
+   -  Change the [`memory`](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/Vagrantfile#L15) setting in the `Vagrantfile` 
+   -  Can attempt with less memory but not guarentees
+ - 50GiB of free disk space
+ - VirtualBox 5.2 [Download](https://www.virtualbox.org/wiki/Downloads)
+ - Vagrant 2.0 [Download](https://www.vagrantup.com/downloads.html)
  - Operating Systems
    - Mac OSx 10.12.6
    - Windows 10
@@ -47,7 +48,10 @@ This `Vagrantfile` will stand up a single [VirtualBox](https://www.virtualbox.or
 | cfc-manager1 | RUNNING | 192.168.27.111 (eth0) 172.17.0.1 (docker0) 10.1.16.98 (tunl0)  |      | PERSISTENT | 0         |  
 
 #### Conflicting Network Segments
-If you see the addresses `192.168.56.101` or `192.168.56.102` for either `cfc-worker1` or `cfc-worker2` that means there was a conflicting network segment for the `192.168.27.x` network on your system. You will need to change the `base_segment` value in the `Vagrantfile` to a value that will not overlap any existing segments on your machine. See the comments in the `Vagrantfile` for [examples](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/Vagrantfile#L24-L28)
+If you see the addresses `192.168.56.101` or `192.168.56.102` for either `cfc-worker1` or `cfc-worker2` that means there was a conflicting network segment for the `192.168.27.x` network on your system. You will need to change the `base_segment` value in the `Vagrantfile` to a value that will not overlap any existing segments on your machine. See the comments in the `Vagrantfile` for [examples](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/Vagrantfile#L24-L28)  Note that after changing `Vagrantfile` `base_segment` value you will need to halt and restart as follows:
+
+    vagrant destroy
+    vagrant up
 
 #### Web/Kube Dashboard Showing 3X Amount of Memory/CPU than I have on My Laptop
 Because we are using `lxc` containers to run the `cfc-worker1` and `cfc-worker2` nodes you will see the IBM Cloud Private community edition Dashboard report 3x as much memory availble in your cluster than you allocated via the [`memory`](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/Vagrantfile#L15) setting in the `Vagrantfile`. Don't worry, this is normal.  `LXD` is sharing the total memory available to the VirtualBox VM with each `lxc` instance so the amount of memory you see being reported in the IBM Cloud Private community edition console is a result of each node reporting that it has the amount of `memory` allocated to the VirtualBox host in the `memory` setting. The best way to think about how `lxc` instances share host resources is to think of `lxc` instances as being applications that run on your laptop where each `lxc` instance is an application and the host where the `lxc` instances are running is the laptop. Each `lxc` instance can request memory or cpu from the host as needed and return those resources when they are no longer needed just like running multiple applications on your laptop does.

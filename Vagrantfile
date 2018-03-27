@@ -16,10 +16,10 @@ cpus = '4'
 
 # use this setting for better performance if you have the ram available on your laptop
 # uncomment the below line and comment out the above line "#memory = '4096'"
-memory = '8192'
+memory = '10240'
 
 # Update version to pull a specific version i.e. version = '2.1.0-beta-1'
-version = "2.1.0"
+version = "2.1.0.1"
 
 # host-only network segment - in most cases you do not have to change this value
 # on some systems this network segment may overlap another network already on your
@@ -28,7 +28,7 @@ version = "2.1.0"
 base_segment = '192.168.27'
 
 # enable/disable cluster federation
-federation_enabled = 'false'
+federation_enabled = 'true'
 
 # enable the metering service
 # only used if version < 2.1.0-beta-3 see disabled_management_services below
@@ -38,7 +38,7 @@ metering_enabled = 'true'
 # "va" turns off vulnerability advisor
 # "metering" turns off prometheus and grafana metering
 # "monitoring"  turns off monitoring services
-disabled_management_services = '["va","metering","monitoring"]'
+disabled_management_services = '["va"]'
 
 # use apt-cacher-ng & docker registry cache servers
 # see instructions in the `README.md` under #Advanced Cache Setup
@@ -46,6 +46,9 @@ use_cache = 'false'
 cache_host = '192.168.27.99'
 apt_cache_port = '3142'
 docker_registry_port = '5000'
+helm_version = '2.6.0'
+k8s_version = '1.8.3'
+etcd_version = '3.1.5'
 
 ###############################################################################
 #                  DO NOT MODIFY ANYTHING BELOW THIS POINT                    #
@@ -53,6 +56,9 @@ docker_registry_port = '5000'
 
 cfc_config = "
 ---
+# Network CNI
+network_type: calico
+
 # Network in IPv4 CIDR format
 network_cidr: 10.1.0.0/16
 
@@ -62,13 +68,12 @@ service_cluster_ip_range: 10.0.0.1/24
 # Flag to enable ldap with true, disabled by default.
 ldap_enabled: false
 
-# Kubernetes service cluster name
-cluster_name: mycluster
-cluster_access_ip: #{base_segment}.100
-proxy_access_ip: #{base_segment}.100
-
 # Config federation cluster
-federation_enabled: false
+federation_enabled: #{federation_enabled}
+federation_cluster: federation-cluster
+federation_domain: cluster.federation
+# federation_apiserver_extra_args: []
+# federation_controllermanager_extra_args: []
 
 ansible_user: vagrant
 ansible_become: true
@@ -76,14 +81,8 @@ ansible_become: true
 # enabled/disable python docker install
 install_docker_py: false
 
-# maximum wait time for docker-py to start a container
-docker_api_timeout: 300
-
-# default timeout value for operations
-wait_for_timeout: 3600
-
 # enable the metering service
-metering_enabled: false
+metering_enabled: #{metering_enabled}
 
 # disabled mgmt services list
 disabled_management_services: #{disabled_management_services}
@@ -96,9 +95,6 @@ private_registry_enabled: false
 private_registry_server: placeholder.com
 docker_username: placeholder
 docker_password: placeholder
-
-ingress_controller:
-  disable-access-log: 'true'
 "
 
 vm_name = "IBM-Cloud-Private-dev-edition"
@@ -148,13 +144,17 @@ if File.exist?(".private")
   private_registry_server = $private_registry_server
   docker_username = $docker_username
   docker_password = $docker_password
+  helm_version = $helm_version
+  k8s_version = $k8s_version
+  etcd_version = $etcd_version
 end
 
 docker_mirror = ''
 apt_proxy_conf = ''
 
 if use_cache.downcase.eql? 'true'
-	docker_mirror = "\"registry-mirrors\": [\"http://#{cache_host}:#{docker_registry_port}\"]"
+	docker_mirror = ",
+                \"registry-mirrors\": [\"http://#{cache_host}:#{docker_registry_port}\"]"
 	apt_proxy_conf = "
             Acquire {
             	http {
@@ -192,12 +192,16 @@ echo "net.ipv6.conf.default.disable_ipv6 = 1" | sudo tee --append /etc/sysctl.co
 echo "net.ipv6.conf.lo.disable_ipv6 = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
 echo "net.ipv4.tcp_mem = 182757 243679 365514" | sudo tee --append /etc/sysctl.conf > /dev/null
 echo "net.core.netdev_max_backlog = 182757" | sudo tee --append /etc/sysctl.conf > /dev/null
-echo "net.ipv4.conf.enp0s3.proxy_arp = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.conf.eth1.proxy_arp = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
 echo "fs.inotify.max_queued_events = 1048576" | sudo tee --append /etc/sysctl.conf > /dev/null
 echo "fs.inotify.max_user_instances = 1048576" | sudo tee --append /etc/sysctl.conf > /dev/null
 echo "fs.inotify.max_user_watches = 1048576" | sudo tee --append /etc/sysctl.conf > /dev/null
 echo "vm.max_map_count = 262144" | sudo tee --append /etc/sysctl.conf > /dev/null
 echo "kernel.dmesg_restrict = 0" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.tcp_keepalive_time = 600" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.tcp_keepalive_intvl = 60" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.ipv4.tcp_keepalive_probes = 20" | sudo tee --append /etc/sysctl.conf > /dev/null
+echo "net.bridge.bridge-nf-call-iptables = 1" | sudo tee --append /etc/sysctl.conf > /dev/null
 
 echo "* soft nofile 1048576" | sudo tee --append /etc/security/limits.conf > /dev/null
 echo "* hard nofile 1048576" | sudo tee --append /etc/security/limits.conf > /dev/null
@@ -236,10 +240,7 @@ sudo add-apt-repository "deb [arch=amd64] http://download.docker.com/linux/ubunt
 sudo apt-get update --yes --quiet
 sudo apt-get install --yes --quiet --target-release=xenial-backports lxd lxd-client bridge-utils dnsmasq thin-provisioning-tools \
     curl linux-image-extra-$(uname -r) linux-image-extra-virtual apt-transport-https ca-certificates software-properties-common \
-    docker-ce python-setuptools python-pip build-essential python-dev nfs-kernel-server nfs-common aufs-tools ntp
-sudo sed -i 's|ExecStart=/usr/bin/dockerd -H fd://|ExecStart=/usr/bin/dockerd -H fd:// --max-concurrent-downloads 10|g' /etc/systemd/system/multi-user.target.wants/docker.service
-sudo systemctl daemon-reload
-sudo systemctl restart docker
+    docker-ce python-setuptools python-pip build-essential python-dev nfs-kernel-server nfs-common aufs-tools ntp criu
 sudo -H pip install --upgrade pip
 sudo -H pip install docker
 sudo usermod -aG lxd vagrant
@@ -251,8 +252,7 @@ sudo bash -c 'cat > /etc/docker/daemon.json' <<'EOF'
   "log-driver": "json-file",
   "log-opts": {
     "max-size": "10m"
-  }
-  #{docker_mirror}
+  }#{docker_mirror}
 }
 EOF
 sudo systemctl daemon-reload
@@ -299,21 +299,42 @@ sudo mkdir /storage/share09 -p
 sudo chmod 777 /storage/share09
 sudo mkdir /storage/share10 -p
 sudo chmod 777 /storage/share10
+sudo mkdir /storage/share11 -p
+sudo chmod 777 /storage/share11
+sudo mkdir /storage/share12 -p
+sudo chmod 777 /storage/share12
+sudo mkdir /storage/share13 -p
+sudo chmod 777 /storage/share13
+sudo mkdir /storage/share14 -p
+sudo chmod 777 /storage/share14
+sudo mkdir /storage/share15 -p
+sudo chmod 777 /storage/share15
+sudo mkdir /storage/share16 -p
+sudo chmod 777 /storage/share16
+sudo mkdir /storage/share17 -p
+sudo chmod 777 /storage/share17
+sudo mkdir /storage/share18 -p
+sudo chmod 777 /storage/share18
+sudo mkdir /storage/share19 -p
+sudo chmod 777 /storage/share19
+sudo mkdir /storage/share20 -p
+sudo chmod 777 /storage/share20
 echo "/storage           *(rw,sync,no_subtree_check,async,insecure,no_root_squash)" | sudo tee --append /etc/exports > /dev/null
 sudo systemctl restart nfs-kernel-server
 SCRIPT
 
 configure_nat_iptable_rules = <<SCRIPT
-sudo iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 SCRIPT
 
 configure_lxd = <<SCRIPT
 sudo bash -c 'cat >> /etc/network/interfaces' <<'EOF'
-    post-up ifconfig enp0s8 promisc on
+    post-up ifconfig eth1 promisc on
 
-iface enp0s8 inet manual
+iface eth1 inet manual
 EOF
 sudo ufw disable
+mkdir -p /home/vagrant/cluster
 cat <<EOF | sudo -H lxd init --preseed
 config:
   images.auto_update_interval: 15
@@ -321,20 +342,20 @@ storage_pools:
   - name: lxd
     driver: lvm
     config: 
-      volume.size: 40GB
+      volume.size: 100GB
       source: /dev/sdc
 networks: 
   - name: lxdbr0
     type: bridge
     config: 
       bridge.driver: native
-      bridge.external_interfaces: enp0s8
+      bridge.external_interfaces: eth1
       bridge.mode: standard
       ipv4.address: "#{base_segment}.100/24"
       ipv4.dhcp: true
       ipv4.dhcp.ranges: "#{base_segment}.100-#{base_segment}.254"
       ipv4.firewall: false
-      ipv4.nat: false
+      ipv4.nat: true
       ipv4.routing: true
       ipv6.address: none
       dns.domain: icp
@@ -346,12 +367,12 @@ profiles:
   - name: default
     config: 
       boot.autostart: true
-      linux.kernel_modules: bridge,br_netfilter,x_tables,ip_tables,ip_vs,ip_set,ipip,xt_mark,xt_multiport,ip_tunnel,tunnel4,netlink_diag,nf_conntrack,nfnetlink,overlay
-      raw.lxc: |-
-        lxc.aa_profile = unconfined
-        lxc.cgroup.devices.allow = a
-        lxc.mount.auto=proc:rw sys:rw cgroup:rw
-        lxc.cap.drop =
+      linux.kernel_modules: bridge,br_netfilter,x_tables,ip_tables,ip6_tables,ip_vs,ip_set,ipip,xt_mark,xt_multiport,ip_tunnel,tunnel4,netlink_diag,nf_conntrack,nfnetlink,nf_nat,overlay
+      raw.lxc: |
+        lxc.aa_profile=unconfined
+        lxc.mount.auto=proc:rw sys:rw cgroup-full:rw
+        lxc.cap.drop=
+        lxc.cgroup.devices.allow=a
       security.nesting: "true"
       security.privileged: "true"
       user.network-config: |
@@ -368,8 +389,10 @@ profiles:
         users:
           - default
           - name: vagrant
-            sudo: ['ALL=(ALL) NOPASSWD:ALL']
-            groups: sudo
+            sudo: ['ALL=(ALL:ALL) NOPASSWD:ALL']
+            groups: sudo, admin, users, vagrant
+            primary-group: vagrant
+            home: /home/vagrant
             shell: /bin/bash
             ssh-authorized-keys:
               - $(cat ~/.ssh/id_rsa.pub)
@@ -414,6 +437,7 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
           - ca-certificates 
           - curl 
           - software-properties-common
+          - squashfuse
           - docker-ce
           - python-setuptools
           - python-pip
@@ -425,9 +449,7 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
           - [ mkdir, -p, /var/lib/kubelet ]
           - [ mount, -o, bind, /var/lib/kubelet, /var/lib/kubelet ]
           - [ mount, --make-shared, /var/lib/kubelet ]
-          - sed -i 's|ExecStart=/usr/bin/dockerd -H fd://|ExecStart=/usr/bin/dockerd -H fd:// --max-concurrent-downloads 10|g' /etc/systemd/system/multi-user.target.wants/docker.service
-          - [ systemctl, daemon-reload ]
-          - [ systemctl, restart, docker ]
+          - [ ln, -s, /bin/true, /usr/local/bin/udevadm ]
           - [ pip, install, --upgrade, pip ]
           - [ pip, install, docker ]
           - [ usermod, -aG, docker, vagrant ]
@@ -439,11 +461,18 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
                 "log-driver": "json-file",
                 "log-opts": {
                   "max-size": "10m"
-                }
-                #{docker_mirror}
+                }#{docker_mirror}
               }
             path: /etc/docker/daemon.json
     devices: 
+      aadisable:
+        path: /sys/module/nf_conntrack/parameters/hashsize
+        source: /dev/null
+        type: disk
+      aadisable1:
+        path: /sys/module/apparmor/parameters/enabled
+        source: /dev/null
+        type: disk
       eth0: 
         name: eth0
         nictype: bridged
@@ -456,13 +485,13 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
       mem:
         type: unix-char
         path: /dev/mem
-  - name: cfc-worker1
+  - name: worker1
     config: 
       boot.autostart.delay: 15
-      boot.autostart.priority: 2
+      boot.autostart.priority: 4
       user.meta-data: |
-        hostname: cfc-worker1
-        fqdn: cfc-worker1.icp
+        hostname: worker1
+        fqdn: worker1.icp
         manage_etc_hosts: true
     devices:
       eth0: 
@@ -471,13 +500,13 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
         parent: lxdbr0
         type: nic
         ipv4.address: #{base_segment}.101
-  - name: cfc-worker2
+  - name: worker2
     config: 
       boot.autostart.delay: 15
-      boot.autostart.priority: 3
+      boot.autostart.priority: 5
       user.meta-data: |
-        hostname: cfc-worker2
-        fqdn: cfc-worker2.icp
+        hostname: worker2
+        fqdn: worker2.icp
         manage_etc_hosts: true
     devices:
       eth0: 
@@ -486,13 +515,13 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
         parent: lxdbr0
         type: nic
         ipv4.address: #{base_segment}.102
-  - name: cfc-worker3
+  - name: worker3
     config: 
       boot.autostart.delay: 15
-      boot.autostart.priority: 4
+      boot.autostart.priority: 6
       user.meta-data: |
-        hostname: cfc-worker3
-        fqdn: cfc-worker3.icp
+        hostname: worker3
+        fqdn: worker3.icp
         manage_etc_hosts: true
     devices:
       eth0: 
@@ -501,27 +530,12 @@ $(curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sed  's/^/          
         parent: lxdbr0
         type: nic
         ipv4.address: #{base_segment}.103
-  - name: cfc-manager1
-    config: 
-      boot.autostart.delay: 15
-      boot.autostart.priority: 1
-      user.meta-data: |
-        hostname: cfc-manager1
-        fqdn: cfc-manager1.icp
-        manage_etc_hosts: true
-    devices:
-      eth0: 
-        name: eth0
-        nictype: bridged
-        parent: lxdbr0
-        type: nic
-        ipv4.address: #{base_segment}.111
 EOF
 sudo sed -i 's/127.0.0.1\tmaster.icp/#{base_segment}.100\tmaster.icp/g' /etc/hosts
 SCRIPT
 
 bring_up_icp_host_interface = <<SCRIPT
-sudo ip link set dev enp0s8 up
+sudo ip link set dev eth1 up
 SCRIPT
 
 set_dnsnameserver_to_lxd_dnsmasq = <<SCRIPT
@@ -529,21 +543,16 @@ echo "nameserver #{base_segment}.100\nsearch icp\n" | sudo tee /etc/resolv.conf 
 SCRIPT
 
 configure_icp_install = <<SCRIPT
-mkdir -p /home/vagrant/cluster
-
 cat > /home/vagrant/cluster/hosts <<'EOF'
 [master]
-#{base_segment}.100 kubelet_extra_args='["--eviction-hard=memory.available<1Mi,nodefs.available<1Mi,nodefs.inodesFree<1%,imagefs.available<1Mi,imagefs.inodesFree<1%", "--image-gc-high-threshold=100%", "--image-gc-low-threshold=100%"]'
+#{base_segment}.100 kubelet_extra_args='["--fail-swap-on=false","--eviction-hard=memory.available<1Mi,nodefs.available<1Mi,nodefs.inodesFree<1%,imagefs.available<1Mi,imagefs.inodesFree<1%", "--image-gc-high-threshold=100%", "--image-gc-low-threshold=100%"]'
 
 [worker]
-#{base_segment}.101
-#{base_segment}.102
+#{base_segment}.101 kubelet_extra_args='["--fail-swap-on=false"]'
+#{base_segment}.102 kubelet_extra_args='["--fail-swap-on=false"]'
 
 [proxy]
-#{base_segment}.100 kubelet_extra_args='["--eviction-hard=memory.available<1Mi,nodefs.available<1Mi,nodefs.inodesFree<1%,imagefs.available<1Mi,imagefs.inodesFree<1%", "--image-gc-high-threshold=100%", "--image-gc-low-threshold=100%"]'
-
-[management]
-#{base_segment}.111 kubelet_extra_args='["--eviction-hard=memory.available<1Mi,nodefs.available<1Mi,nodefs.inodesFree<1%,imagefs.available<1Mi,imagefs.inodesFree<1%", "--image-gc-high-threshold=100%", "--image-gc-low-threshold=100%"]'
+#{base_segment}.100 kube_proxy_extra_args='["--proxy-mode=iptables"]'
 EOF
 
 echo "#{rsa_private_key}" > /home/vagrant/cluster/ssh_key
@@ -557,12 +566,12 @@ sed -i "s|private_registry_enabled\: false|private_registry_enabled\: #{private_
 sed -i "s|private_registry_server\: placeholder.com|private_registry_server\: #{private_registry_server}|g" /home/vagrant/cluster/config.yaml
 sed -i "s|docker_username\: placeholder|docker_username\: #{docker_username}|g" /home/vagrant/cluster/config.yaml
 sed -i "s|docker_password\: placeholder|docker_password\: #{docker_password}|g" /home/vagrant/cluster/config.yaml
+cat /home/vagrant/cluster/config.yaml
 SCRIPT
 
 boot_lxd_worker_nodes = <<SCRIPT
-lxc launch -p default -p cfc-manager1 ubuntu:16.04 cfc-manager1
-lxc launch -p default -p cfc-worker1 ubuntu:16.04 cfc-worker1
-lxc launch -p default -p cfc-worker2 ubuntu:16.04 cfc-worker2
+lxc launch -p default -p worker1 ubuntu:16.04 worker1
+lxc launch -p default -p worker2 ubuntu:16.04 worker2
 SCRIPT
 
 wait_for_worker_nodes_to_boot = <<SCRIPT
@@ -571,44 +580,39 @@ echo "Preparing nodes for IBM Cloud Private community edition cluster installati
 echo "This process will take approximately 10-20 minutes depending on network speeds."
 echo "Take a break and go grab a cup of coffee, we'll keep working on this while you're away ;-)"
 echo ""
-FILES="/home/vagrant/cluster/cfc-manager1
-/home/vagrant/cluster/cfc-worker1
-/home/vagrant/cluster/cfc-worker2"
+FILES="/home/vagrant/worker1
+/home/vagrant/worker2"
 for file in $FILES
 do
   while [ ! -f "$file" ]
   do
     filename=$(basename "$file")
-    lxc file pull -p $filename/DONE /home/vagrant/cluster/$filename &> /dev/null
+    lxc file pull -p $filename/DONE /home/vagrant/$filename &> /dev/null
     printf "."
     sleep 10
   done
 done
 
-# sanity check (eth0 should be assigned on all 3 lxc nodes)
-if [ "3" -gt "$(lxc list | grep -o eth0 | wc -l)" ]; then
+# sanity check (eth0 should be assigned on all 4 lxc nodes)
+if [ "2" -gt "$(lxc list | grep -o eth0 | wc -l)" ]; then
     echo "Failed to assign IP to lxc nodes..."
-    lxc exec cfc-manager1 -- cat /var/log/cloud-init-output.log | grep -C 3 error
-    lxc exec cfc-worker1 -- cat /var/log/cloud-init-output.log | grep -C 3 error
-    lxc exec cfc-worker2 -- cat /var/log/cloud-init-output.log | grep -C 3 error
+    lxc exec worker1 -- cat /var/log/cloud-init-output.log | grep -C 3 error
+    lxc exec worker2 -- cat /var/log/cloud-init-output.log | grep -C 3 error
     echo "You may need to change the 'base_segment' value in the 'Vagrantfile' to another subnet like '192.168.56'."
     exit 1
 fi
 
-# sanity check (docker0 should be assigned on all 3 lxc nodes)
-if [ "3" -gt "$(lxc list | grep -o docker0 | wc -l)" ]; then
+# sanity check (docker0 should be assigned on all 4 lxc nodes)
+if [ "2" -gt "$(lxc list | grep -o docker0 | wc -l)" ]; then
     echo "Failed to install docker on lxc nodes..."
-    lxc exec cfc-manager1 -- cat /var/log/cloud-init-output.log | grep -C 3 error
-    lxc exec cfc-worker1 -- cat /var/log/cloud-init-output.log | grep -C 3 error
-    lxc exec cfc-worker2 -- cat /var/log/cloud-init-output.log | grep -C 3 error
+    lxc exec worker1 -- cat /var/log/cloud-init-output.log | grep -C 3 error
+    lxc exec worker2 -- cat /var/log/cloud-init-output.log | grep -C 3 error
     echo "You may need to change the 'base_segment' value in the 'Vagrantfile' to another subnet like '192.168.56'."
     exit 1
 fi
 
-echo "master.icp\t\t\t ready"
-echo "cfc-worker1.icp\t\t ready"
-echo "cfc-worker2.icp\t\t ready"
-echo "cfc-manager1.icp\t\t ready"
+echo "worker1.icp\t\t ready"
+echo "worker2.icp\t\t ready"
 SCRIPT
 
 docker_login = <<SCRIPT
@@ -629,19 +633,19 @@ echo "Pulling #{image_repo}/icp-datastore:#{version}..."
 docker pull #{image_repo}/icp-datastore:#{version} &> /dev/null
 echo "Pulling #{image_repo}/icp-platform-auth:#{version}..."
 docker pull #{image_repo}/icp-platform-auth:#{version} &> /dev/null
-echo "Pulling #{image_repo}/icp-auth:#{version}..."
-docker pull #{image_repo}/icp-auth:#{version} &> /dev/null
 echo "Pulling #{image_repo}/iam-token-service:#{version}..."
 docker pull #{image_repo}/iam-token-service:#{version} &> /dev/null
-echo "Pulling #{image_repo}/kubernetes:v1.7.3..."
-docker pull #{image_repo}/kubernetes:v1.7.3 &> /dev/null
-echo "Pulling #{image_repo}/helm:v2.5.0..."
-docker pull #{image_repo}/helm:v2.5.0 &> /dev/null
+echo "Pulling #{image_repo}/kubernetes:v#{k8s_version}..."
+docker pull #{image_repo}/kubernetes:v#{k8s_version} &> /dev/null
+echo "Pulling #{image_repo}/helm:v#{helm_version}..."
+docker pull #{image_repo}/helm:v#{helm_version} &> /dev/null
+echo "Pulling #{image_repo}/etcd:v#{etcd_version}..."
+docker pull #{image_repo}/etcd:v#{etcd_version} &> /dev/null
 SCRIPT
 
 install_icp = <<SCRIPT
 exec 3>&1 1>>icp_install_log 2>&1
-docker run -e LICENSE=#{license} --net=host -v "$(pwd)/cluster":/installer/cluster #{image_repo}/icp-inception:#{version} install | tee /dev/fd/3
+sudo docker run -e LICENSE=#{license} --net=host -v "$(pwd)/cluster":/installer/cluster #{image_repo}/icp-inception:#{version} install | tee /dev/fd/3
 if grep -q fatal icp_install_log; then
 	echo "FATAL ERROR OCCURRED DURING INSTALLATION :-(" 1>&3
 	cat icp_install_log | grep -C 3 fatal 1>&3
@@ -653,7 +657,8 @@ fi
 SCRIPT
 
 install_kubectl = <<SCRIPT
-sudo docker run -e LICENSE=#{license} --net=host -v /usr/local/bin:/data #{image_repo}/kubernetes:v1.7.3 cp /kubectl /data &> /dev/null
+echo "Pulling #{image_repo}/kubernetes:v#{k8s_version}..."
+sudo docker run -e LICENSE=#{license} --net=host -v /usr/local/bin:/data #{image_repo}/kubernetes:v#{k8s_version} cp /kubectl /data &> /dev/null
 kubectl config set-credentials icpadmin --username=admin --password=admin &> /dev/null
 kubectl config set-cluster icp --server=http://127.0.0.1:8888 --insecure-skip-tls-verify=true &> /dev/null
 kubectl config set-context icp --cluster=icp --user=admin  --namespace=default &> /dev/null
@@ -669,7 +674,7 @@ metadata:
    name: vol01
 spec:
    capacity:
-      storage: 40Gi
+      storage: 20Gi
    accessModes:
       - ReadWriteMany
    persistentVolumeReclaimPolicy: Recycle
@@ -683,7 +688,7 @@ metadata:
    name: vol02
 spec:
    capacity:
-      storage: 40Gi
+      storage: 20Gi
    accessModes:
       - ReadWriteMany
    persistentVolumeReclaimPolicy: Recycle
@@ -697,7 +702,7 @@ metadata:
    name: vol03
 spec:
    capacity:
-      storage: 40Gi
+      storage: 20Gi
    accessModes:
       - ReadWriteMany
    persistentVolumeReclaimPolicy: Recycle
@@ -711,7 +716,7 @@ metadata:
    name: vol04
 spec:
    capacity:
-      storage: 40Gi
+      storage: 20Gi
    accessModes:
       - ReadWriteMany
    persistentVolumeReclaimPolicy: Recycle
@@ -725,7 +730,7 @@ metadata:
    name: vol05
 spec:
    capacity:
-      storage: 40Gi
+      storage: 20Gi
    accessModes:
       - ReadWriteMany
    persistentVolumeReclaimPolicy: Recycle
@@ -739,9 +744,9 @@ metadata:
    name: vol06
 spec:
    capacity:
-      storage: 40Gi
+      storage: 20Gi
    accessModes:
-      - ReadWriteOnce
+      - ReadWriteMany
    persistentVolumeReclaimPolicy: Recycle
    nfs:
       path: /storage/share06
@@ -753,9 +758,9 @@ metadata:
    name: vol07
 spec:
    capacity:
-      storage: 40Gi
+      storage: 20Gi
    accessModes:
-      - ReadWriteOnce
+      - ReadWriteMany
    persistentVolumeReclaimPolicy: Recycle
    nfs:
       path: /storage/share07
@@ -767,9 +772,9 @@ metadata:
    name: vol08
 spec:
    capacity:
-      storage: 40Gi
+      storage: 20Gi
    accessModes:
-      - ReadWriteOnce
+      - ReadWriteMany
    persistentVolumeReclaimPolicy: Recycle
    nfs:
       path: /storage/share08
@@ -781,9 +786,9 @@ metadata:
    name: vol09
 spec:
    capacity:
-      storage: 40Gi
+      storage: 20Gi
    accessModes:
-      - ReadWriteOnce
+      - ReadWriteMany
    persistentVolumeReclaimPolicy: Recycle
    nfs:
       path: /storage/share09
@@ -795,19 +800,159 @@ metadata:
    name: vol10
 spec:
    capacity:
-      storage: 40Gi
+      storage: 20Gi
    accessModes:
-      - ReadWriteOnce
+      - ReadWriteMany
    persistentVolumeReclaimPolicy: Recycle
    nfs:
       path: /storage/share10
       server: #{base_segment}.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: vol11
+spec:
+   capacity:
+      storage: 20Gi
+   accessModes:
+      - ReadWriteOnce
+   persistentVolumeReclaimPolicy: Recycle
+   nfs:
+      path: /storage/share11
+      server: #{base_segment}.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: vol12
+spec:
+   capacity:
+      storage: 20Gi
+   accessModes:
+      - ReadWriteOnce
+   persistentVolumeReclaimPolicy: Recycle
+   nfs:
+      path: /storage/share12
+      server: #{base_segment}.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: vol13
+spec:
+   capacity:
+      storage: 20Gi
+   accessModes:
+      - ReadWriteOnce
+   persistentVolumeReclaimPolicy: Recycle
+   nfs:
+      path: /storage/share13
+      server: #{base_segment}.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: vol14
+spec:
+   capacity:
+      storage: 20Gi
+   accessModes:
+      - ReadWriteOnce
+   persistentVolumeReclaimPolicy: Recycle
+   nfs:
+      path: /storage/share14
+      server: #{base_segment}.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: vol15
+spec:
+   capacity:
+      storage: 20Gi
+   accessModes:
+      - ReadWriteOnce
+   persistentVolumeReclaimPolicy: Recycle
+   nfs:
+      path: /storage/share15
+      server: #{base_segment}.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: vol16
+spec:
+   capacity:
+      storage: 20Gi
+   accessModes:
+      - ReadWriteOnce
+   persistentVolumeReclaimPolicy: Recycle
+   nfs:
+      path: /storage/share16
+      server: #{base_segment}.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: vol17
+spec:
+   capacity:
+      storage: 20Gi
+   accessModes:
+      - ReadWriteOnce
+   persistentVolumeReclaimPolicy: Recycle
+   nfs:
+      path: /storage/share17
+      server: #{base_segment}.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: vol18
+spec:
+   capacity:
+      storage: 20Gi
+   accessModes:
+      - ReadWriteOnce
+   persistentVolumeReclaimPolicy: Recycle
+   nfs:
+      path: /storage/share18
+      server: #{base_segment}.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: vol19
+spec:
+   capacity:
+      storage: 20Gi
+   accessModes:
+      - ReadWriteOnce
+   persistentVolumeReclaimPolicy: Recycle
+   nfs:
+      path: /storage/share19
+      server: #{base_segment}.100
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: vol20
+spec:
+   capacity:
+      storage: 20Gi
+   accessModes:
+      - ReadWriteOnce
+   persistentVolumeReclaimPolicy: Recycle
+   nfs:
+      path: /storage/share20
+      server: #{base_segment}.100
 EOF
-kubectl create -f ./volumes.yaml &> /dev/null
+kubectl create -f /home/vagrant/volumes.yaml
 SCRIPT
 
 install_helm = <<SCRIPT
-sudo docker run -t --entrypoint=/bin/cp -v /usr/local/bin:/data #{image_repo}/helm:v2.5.0  /helm /data/ &> /dev/null
+sudo docker run -t --entrypoint=/bin/cp -v /usr/local/bin:/data #{image_repo}/helm:v#{helm_version}  /helm /data/ &> /dev/null
 sudo mkdir -p /var/lib/helm &> /dev/null
 export HELM_HOME=/var/lib/helm &> /dev/null
 echo "HELM_HOME=/var/lib/helm" >> ~/.bash_profile &> /dev/null
@@ -819,11 +964,23 @@ install_startup_script = <<SCRIPT
 sudo bash -c 'cat > /usr/local/bin/icp-ce-startup.sh' <<'EOF'
 #!/bin/bash
 
-sudo iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
-sudo ip link set dev enp0s8 up
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+sudo ip link set dev eth1 up
 echo "nameserver #{base_segment}.100" | sudo tee /etc/resolv.conf > /dev/null
 echo "search icp" | sudo tee --append /etc/resolv.conf > /dev/null
 sudo docker ps -a | grep Exit | cut -d ' ' -f 1 | xargs sudo docker rm > /dev/null || true
+sleep 180
+kubectl config set-credentials icpadmin --username=admin --password=admin &> /dev/null
+kubectl config set-cluster icp --server=http://127.0.0.1:8888 --insecure-skip-tls-verify=true &> /dev/null
+kubectl config set-context icp --cluster=icp --user=admin  --namespace=default &> /dev/null
+kubectl config use-context icp &> /dev/null
+kubectl get pods -o wide -n kube-system | grep "icp-ds" | cut -d ' ' -f 1 | xargs kubectl -n kube-system delete pods
+sleep 120
+while [[ '' != $(kubectl get pods --namespace kube-system | sed -n '1!p' | grep -v Running) ]]
+do
+  kubectl get pods -o wide -n kube-system | grep "CrashLoopBackOff\\|Init" | cut -d ' ' -f 1 | xargs kubectl -n kube-system delete pods
+  sleep 120
+done
 EOF
 sudo chmod 744 /usr/local/bin/icp-ce-startup.sh
 
@@ -842,26 +999,52 @@ sudo systemctl daemon-reload
 sudo systemctl enable icp-ce-startup.service
 SCRIPT
 
+install_shutdown_script = <<SCRIPT
+sudo bash -c 'cat > /usr/local/bin/icp-ce-shutdown.sh' <<'EOF'
+#!/bin/bash
+
+lxc stop worker1 --stateful
+lxc stop worker2 --stateful
+EOF
+sudo chmod 744 /usr/local/bin/icp-ce-shutdown.sh
+
+sudo bash -c 'cat > /etc/systemd/system/icp-ce-shutdown.service' <<'EOF'
+[Unit]
+Description=stops lxc containers preserving state at system shutdown
+Conflicts=reboot.target
+After=network.target
+
+[Service]
+ExecStop=/usr/local/bin/icp-ce-shutdown.sh
+
+[Install]
+WantedBy=default.target
+EOF
+sudo chmod 644 /etc/systemd/system/icp-ce-shutdown.service
+sudo systemctl daemon-reload
+sudo systemctl enable icp-ce-shutdown.service
+SCRIPT
+
 install_shellinabox = <<SCRIPT
 sudo apt-get install -y shellinabox &> /dev/null
 SCRIPT
 
 ensure_services_up = <<SCRIPT
-sleep 60
+sleep 120
 echo "Waiting for all IBM Cloud Private Services to start..."
 count=0
 while [[ '' != $(kubectl get pods --namespace kube-system | sed -n '1!p' | grep -v Running) ]]
 do
-  if [ "90" -lt "$count" ]; then
+  if [ "60" -lt "$count" ]; then
   	echo "The following services are still not available after 30 minutes..."
   	kubectl get pods --namespace kube-system | grep -v Running
   	exit
   fi
   count=$(($count+1))
   echo "."
-  sleep 20
+  sleep 30
 done
-if [ "90" -gt "$count" ]; then
+if [ "60" -gt "$count" ]; then
 	echo "All IBM Cloud Private Services have been successfully started..."
 	kubectl get pods --namespace kube-system &> kube-system-services.list
 	cat kube-system-services.list
@@ -966,9 +1149,9 @@ Vagrant.configure(2) do |config|
 
   config.vm.define "icp" do |icp|
     icp.vm.box = "bento/ubuntu-16.04"
-    icp.vm.box_version = "201708.22.0"
+    icp.vm.box_version = "201710.25.0"
     icp.vm.hostname = "master.icp"
-    icp.vm.box_check_update = false
+    icp.vm.box_check_update = true
     icp.vm.network "private_network", ip: "#{base_segment}.100", adapter_ip: "#{base_segment}.1", netmask: "255.255.255.0", auto_config: false
     icp.vm.provider "virtualbox" do |virtualbox|
       virtualbox.name = "#{vm_name}"
@@ -999,12 +1182,12 @@ Vagrant.configure(2) do |config|
       virtualbox.customize ["modifyvm", :id, "--clipboard", "disabled"] # disable clipboard
       virtualbox.customize ["modifyvm", :id, "--usbehci", "off"] # disable usb hot-plug drivers
       virtualbox.customize ["modifyvm", :id, "--vrde", "off"]
-      virtualbox.customize [ "setextradata", :id, "VBoxInternal/Devices/VMMDev/0/Config/GetHostTimeDisabled", 0 ] # turns the timesync on
-      virtualbox.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-interval", 10000 ] # sync time every 10 seconds
-      virtualbox.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-min-adjust", 100 ] # adjustments if drift > 100 ms
-      virtualbox.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-on-restore", 1 ] # sync time on restore
-      virtualbox.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-start", 1 ] # sync time on start
-      virtualbox.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 1000 ] # at 1 second drift, the time will be set and not "smoothly" adjusted 
+      virtualbox.customize ["setextradata", :id, "VBoxInternal/Devices/VMMDev/0/Config/GetHostTimeDisabled", 0] # turns the timesync on
+      virtualbox.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-interval", 10000] # sync time every 10 seconds
+      virtualbox.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-min-adjust", 100] # adjustments if drift > 100 ms
+      virtualbox.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-on-restore", 1] # sync time on restore
+      virtualbox.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-start", 1] # sync time on start
+      virtualbox.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 1000] # at 1 second drift, the time will be set and not "smoothly" adjusted 
       virtualbox.customize ['modifyvm', :id, '--cableconnected1', 'on'] # fix for https://github.com/mitchellh/vagrant/issues/7648
       virtualbox.customize ['modifyvm', :id, '--cableconnected2', 'on'] # fix for https://github.com/mitchellh/vagrant/issues/7648
       virtualbox.customize ['storagectl', :id, '--name', 'SATA Controller', '--hostiocache', 'on'] # use host I/O cache
@@ -1026,11 +1209,12 @@ Vagrant.configure(2) do |config|
       icp.vm.provision "shell", inline: docker_login, keep_color: true, name: "docker_login"
     end
     icp.vm.provision "shell", inline: precache_images, keep_color: true, name: "precache_images"
-    icp.vm.provision "shell", inline: install_icp, keep_color: true, name: "install_icp"
+    icp.vm.provision "shell", privileged: false, inline: install_icp, keep_color: true, name: "install_icp"
     icp.vm.provision "shell", privileged: false, inline: install_kubectl, keep_color: true, name: "install_kubectl"
     icp.vm.provision "shell", privileged: false, inline: create_persistant_volumes, keep_color: true, name: "create_persistant_volumes"
     icp.vm.provision "shell", privileged: false, inline: install_helm, keep_color: true, name: "install_helm"
     icp.vm.provision "shell", privileged: false, inline: install_startup_script, keep_color: true, name: "install_startup_script"
+    icp.vm.provision "shell", privileged: false, inline: install_shutdown_script, keep_color: true, name: "install_shutdown_script"
     icp.vm.provision "shell", privileged: false, inline: install_shellinabox, keep_color: true, name: "install_shellinabox"
     icp.vm.provision "shell", privileged: false, inline: ensure_services_up, keep_color: true, name: "ensure_services_up", run: "always"
     icp.vm.provision "shell", privileged: false, inline: happy_dance, keep_color: true, name: "happy_dance"

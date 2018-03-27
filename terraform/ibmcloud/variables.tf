@@ -15,12 +15,17 @@ variable "key_file" {
 ##### Common VM specifications ######
 variable "datacenter" { default = "dal10" }
 variable "domain" { default = "icp.demo" }
+variable "public_vlan_id" { default = ""}
+variable "private_vlan_id" { default = ""}
 
-##### ICP version #####
+##### ICP settings #####
 variable "icp_version" { default = "ibmcom/icp-inception:2.1.0-beta-3" }
 
 # Name of the ICP installation, will be used as basename for VMs
 variable "instance_name" { default = "myicp" }
+
+# Password to use for default admin user
+variable "default_admin_password" { default = "admin" }
 
 ##### ICP Instance details ######
 variable "master" {

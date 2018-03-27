@@ -33,13 +33,12 @@ resource "openstack_compute_keypair_v2" "icp-key-pair" {
 
 resource "openstack_compute_instance_v2" "icp-worker-vm" {
     count     = "${var.icp_num_workers}"
-    name      = "${format("terraform-icp-worker-${random_id.rand.hex}-%02d", count.index+1)}"
+    name      = "${format("icp-worker-${random_id.rand.hex}-%02d", count.index+1)}"
     image_id  = "${var.openstack_image_id}"
     flavor_id = "${var.openstack_flavor_id_worker_node}"
     key_pair  = "${openstack_compute_keypair_v2.icp-key-pair.name}"
 
     network {
-        uuid = "${var.openstack_network_id}"
         name = "${var.openstack_network_name}"
     }
 
@@ -47,7 +46,7 @@ resource "openstack_compute_instance_v2" "icp-worker-vm" {
 }
 
 resource "openstack_compute_instance_v2" "icp-master-vm" {
-    name      = "terraform-icp-master-${random_id.rand.hex}"
+    name      = "icp-master-${random_id.rand.hex}"
     image_id  = "${var.openstack_image_id}"
     flavor_id = "${var.openstack_flavor_id_master_node}"
     key_pair  = "${openstack_compute_keypair_v2.icp-key-pair.name}"
@@ -63,9 +62,21 @@ resource "openstack_compute_instance_v2" "icp-master-vm" {
     }
 
     network {
-        uuid = "${var.openstack_network_id}"
         name = "${var.openstack_network_name}"
     }
 
-    user_data = "${file("bootstrap_icp_ce_master.sh")}"
+    user_data = "${data.template_file.bootstrap_init.rendered}"
+}
+
+data "template_file" "bootstrap_init" {
+    template = "${file("bootstrap_icp_master.sh")}"
+
+    vars {
+        icp_version = "${var.icp_version}"
+        icp_architecture = "${var.icp_architecture}"
+        icp_edition = "${var.icp_edition}"
+        icp_download_location = "${var.icp_download_location}"
+        install_user_name = "${var.icp_install_user}"
+        install_user_password = "${var.icp_install_user_password}"
+    }
 }

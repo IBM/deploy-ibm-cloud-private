@@ -24,10 +24,25 @@
 /bin/echo "vm.max_map_count=262144" | /usr/bin/tee -a /etc/sysctl.conf
 # Prepare the system for updates, install Docker and install Python
 /usr/bin/apt update
-/usr/bin/apt-get --assume-yes install docker.io
-/usr/bin/apt-get --assume-yes install python
-/usr/bin/apt-get --assume-yes install python-pip
-/bin/systemctl start docker
+# We'll use docker-ce (vs docker.io as ce/ee is what is supported by ICP)
+# Make sure we're not running some old version of docker
+/usr/bin/apt-get --assume-yes purge docker
+/usr/bin/apt-get --assume-yes purge docker-engine
+/usr/bin/apt-get --assume-yes purge docker.io
+/usr/bin/apt-get --assume-yes install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    software-properties-common
+# Add Docker GPG key
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+# Add the repo
+/usr/bin/add-apt-repository \
+   "deb https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+/usr/bin/apt update
+/usr/bin/apt-get --assume-yes install docker-ce python python-pip
 
 # Ensure the hostname is resolvable
 IP=`/sbin/ifconfig eth0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}'`
