@@ -20,7 +20,7 @@
 if [ "${icp_architecture}" == "ppc64le" ]; then
     ICP_DOCKER_IMAGE="ibmcom/icp-inception-ppc64le:${icp_version}"
 else
-    ICP_DOCKER_IMAGE="ibmcom/icp_inception:${icp_version}"
+    ICP_DOCKER_IMAGE="ibmcom/icp-inception:${icp_version}"
 fi
 if [ "${icp_edition}" == "ee" ]; then
     ICP_DOCKER_IMAGE="$ICP_DOCKER_IMAGE-ee"
