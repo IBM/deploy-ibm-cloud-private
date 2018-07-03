@@ -369,7 +369,7 @@ profiles:
       boot.autostart: true
       linux.kernel_modules: bridge,br_netfilter,x_tables,ip_tables,ip6_tables,ip_vs,ip_set,ipip,xt_mark,xt_multiport,ip_tunnel,tunnel4,netlink_diag,nf_conntrack,nfnetlink,nf_nat,overlay
       raw.lxc: |
-        lxc.aa_profile=unconfined
+        lxc.apparmor.profile=unconfined
         lxc.mount.auto=proc:rw sys:rw cgroup-full:rw
         lxc.cap.drop=
         lxc.cgroup.devices.allow=a
