@@ -51,6 +51,7 @@ docker_registry_port = '5000'
 helm_version = '2.6.0'
 k8s_version = '1.8.3'
 etcd_version = '3.1.5'
+docker_version = '17.09.0~ce-0~ubuntu'
 
 ###############################################################################
 #                  DO NOT MODIFY ANYTHING BELOW THIS POINT                    #
@@ -246,9 +247,16 @@ sudo add-apt-repository "deb [arch=amd64] http://download.docker.com/linux/ubunt
 sudo apt-get update --yes --quiet
 sudo apt-get install --yes --quiet --target-release=xenial-backports lxd lxd-client bridge-utils dnsmasq thin-provisioning-tools \
     curl linux-image-extra-$(uname -r) linux-image-extra-virtual apt-transport-https ca-certificates software-properties-common \
-    docker-ce python-setuptools python-pip build-essential python-dev nfs-kernel-server nfs-common aufs-tools ntp criu
+    python-setuptools python-pip build-essential python-dev nfs-kernel-server nfs-common aufs-tools ntp criu
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo apt-key fingerprint 0EBFCD88
+sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+sudo apt-get update -y
 sudo -H pip install --upgrade pip
-sudo -H pip install docker
+sudo apt-get install docker-ce=#{docker_version}
 sudo usermod -aG lxd vagrant
 newgrp lxd
 sudo usermod -aG docker vagrant
