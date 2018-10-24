@@ -66,7 +66,7 @@ If you find yourself running this Vagrant setup multiple times it might be a goo
 export  VAGRANT_VAGRANTFILE=Cachefile  
 vagrant up
 ```  
-Both servers act as simple _proxy pass-through_ servers. When you configure the `Vagrantfile` to `use_cache = 'true'` and set the `cache_host = '192.168.27.99'` (which is the default value set in the `Vagrantfile`) all `apt-get install` and `docker pull` commands will proxy through the cache server and use the resources allready cached there or continue on to the original source and cache the result on the cache server. Using the cache server will significantly decrease the amount of time it takes to install ICP on subsequent installs.  
+Both servers act as simple _proxy pass-through_ servers. When you configure the `Vagrantfile` to `use_cache = 'true'` and set the `cache_host = '192.168.27.99'` (which is the default value set in the `Vagrantfile`) all `apt-get install` and `docker pull` commands will proxy through the cache server and use the resources already cached there or continue on to the original source and cache the result on the cache server. Using the cache server will significantly decrease the amount of time it takes to install ICP on subsequent installs.  
 
 If you want to run the cache server on another machine you will need to identify the IP of the host where you're running the cache server instance and use that value in the `cache_host` property in the `Vagrantfile`.  By default the `Cachefile` will port-forward all requests on the host for `3142` & `5000` onto the vagrant instance of cache server running on the host.  
 
