@@ -158,8 +158,21 @@ fi
 /bin/echo "$IP"    >> cluster/hosts
 /bin/echo "[proxy]"  >> cluster/hosts
 /bin/echo "$IP"    >> cluster/hosts
+
+x=0
+while [ "$x" -lt 100 -a ! -f /tmp/icp_worker_nodes.txt ]; do
+   x=$((x+1))
+   /bin/sleep 1
+done
+
 # Configure the worker node(s)
-for worker_ip in $( cat /root/icp_worker_nodes.txt | sed 's/|/\n/g' ); do
+for worker_ip in $( cat /tmp/icp_worker_nodes.txt | sed 's/|/\n/g' ); do
+    x=0
+    while [ "$x" -lt 100 ] && ! ping -c 1 -W 1 $worker_ip; do
+       x=$((x+1))
+       /bin/echo "$worker_ip is unreachable, trying after 10s"
+       /bin/sleep 10
+    done
     /bin/echo "[worker]"     >> cluster/hosts
     /bin/echo "$worker_ip" >> cluster/hosts
 done
@@ -178,7 +191,7 @@ else
 fi
 
 # Setup the private key for the ICP cluster (injected at deploy time)
-/bin/cp /root/id_rsa.terraform \
+/bin/cp /tmp/id_rsa.terraform \
     $ICP_ROOT_DIR/cluster/ssh_key
 /bin/chmod 400 $ICP_ROOT_DIR/cluster/ssh_key
 
