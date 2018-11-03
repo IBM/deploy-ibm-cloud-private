@@ -1183,8 +1183,8 @@ Vagrant.configure(2) do |config|
 
   config.vm.define "icp" do |icp|
     icp.vm.box = "bento/ubuntu-16.04"
-    icp.vm.box_version = "201806.08.0"
-    # icp.vm.box_version = "201710.25.0"
+    icp.vm.box_version = "201808.24.0"
+    # icp.vm.box_version = "201806.08.0"
     icp.vm.hostname = "master.icp"
     icp.vm.box_check_update = true
     icp.vm.network "private_network", ip: "#{base_segment}.100", adapter_ip: "#{base_segment}.1", netmask: "255.255.255.0", auto_config: false
