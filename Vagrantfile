@@ -287,7 +287,7 @@ HRNGDEVICE=/dev/urandom
 EOF
 sudo /etc/init.d/rng-tools restart
 sudo apt-get update --yes --quiet
-sudo apt-get upgrade --yes --quiet
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
 sudo apt autoremove --yes --quiet
 SCRIPT
 
