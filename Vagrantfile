@@ -12,7 +12,7 @@ cpus = '6'
 
 # should be sufficent on laptops with 16GiB of RAM (but you won't want to run any apps
 # while this vm is running)
-memory = '6144'
+memory = '8192'
 
 # Update version to pull a specific version i.e. version = '2.1.0-beta-1'
 version = "3.1.0"
@@ -21,7 +21,7 @@ version = "3.1.0"
 # on some systems this network segment may overlap another network already on your
 # system. In those cases you will need to change this value to another value
 # i.e. 192.168.56 or 192.168.16 etc...
-base_segment = '192.168.27'
+base_segment = '192.168.16'
 
 # use apt-cacher-ng & docker registry cache servers
 # see instructions in the `README.md` under #Advanced Cache Setup

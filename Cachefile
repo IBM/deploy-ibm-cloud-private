@@ -236,7 +236,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.define "icp_cache" do |icp_cache|
     icp_cache.vm.box = "bento/ubuntu-16.04"
-    icp_cache.vm.box_version = "201708.22.0"
+    icp_cache.vm.box_version = "201808.24.0"
     icp_cache.vm.hostname = "cache.icp"
     icp_cache.vm.box_check_update = false
     icp_cache.vm.network "private_network", ip: "#{base_segment}.99", adapter_ip: "#{base_segment}.1", netmask: "255.255.255.0", auto_config: true
