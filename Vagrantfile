@@ -15,7 +15,7 @@ cpus = '6'
 memory = '6144'
 
 # Update version to pull a specific version i.e. version = '2.1.0-beta-1'
-version = "3.1.0"
+version = "3.1.1"
 
 # host-only network segment - in most cases you do not have to change this value
 # on some systems this network segment may overlap another network already on your
@@ -669,8 +669,8 @@ sudo curl -o /tmp/kubectl -LO https://storage.googleapis.com/kubernetes-release/
 sudo chmod +x /tmp/kubectl
 sudo mv /tmp/kubectl /usr/local/bin/kubectl
 sudo mkdir /home/vagrant/kubectl-certs
-sudo cp /home/vagrant/cluster/cfc-certs/kubecfg.crt /home/vagrant/kubectl-certs/kubecfg.crt
-sudo cp /home/vagrant/cluster/cfc-certs/kubecfg.key /home/vagrant/kubectl-certs/kubecfg.key
+sudo cp /home/vagrant/cluster/cfc-certs/kubernetes/kubecfg.crt /home/vagrant/kubectl-certs/kubecfg.crt
+sudo cp /home/vagrant/cluster/cfc-certs/kubernetes/kubecfg.key /home/vagrant/kubectl-certs/kubecfg.key
 sudo chown -R vagrant:vagrant /home/vagrant/kubectl-certs/
 kubectl config set-cluster icp --server=https://#{base_segment}.100:8001 --insecure-skip-tls-verify=true &> /dev/null
 kubectl config set-context icp --cluster=icp &> /dev/null
