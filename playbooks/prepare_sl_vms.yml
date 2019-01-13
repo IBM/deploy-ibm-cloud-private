@@ -53,7 +53,9 @@
       when: ansible_os_family == 'Debian'
 
     - name: disable resolvconf updates
-      command: resolvconf --disable-updates
+      command: /usr/bin/dpkg -l resolvconf &>dev/null &&\
+               resolvconf --disable-updates ||\
+               echo "resolvconf not currently installed."
       when: ansible_os_family == 'Debian'
 
     - name: add alternative dnsmasq resolv.conf
