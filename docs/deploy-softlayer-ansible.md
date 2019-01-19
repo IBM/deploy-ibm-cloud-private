@@ -1,5 +1,26 @@
 ## Deploy IBM Cloud Private beta on IBM Cloud (softlayer) with Ansible
 
+### Before you start...
+
+The following Ansible playbooks will be used for deploying your VM's on SoftLayer:
+
+|                       Playbook                        |                                                     Description                                                     |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [create_sl_vms.yml](../playbooks/create_sl_vms.yml)   | Create the VM's on SoftLayer according to the specifications found on [cluster/config.yaml](../cluster/config.yaml) |
+| [prepare_sl_vms.yml](../playbooks/prepare_sl_vms.yml) | Install all operating system packages required to for the ICP install.                                              |
+
+To customize the hardware definitions of the VM's you'll need to update your local copy of the provisioning playbooks, for instance if an additional disk or more CPU is required.
+
+Please notice that Primary disk sizes should go from 25 GB to 100 GB, if more space is required an additional disk should be created, its also important to notice that disk sizes must have the same size as defined at the default templates provided by the SoftLayer catalog or else your provisioning will fail. Check the documentation below for reference on default sizes available.
+ 
+ - [IBM Block Storage: Provisioning Considerations](https://console.bluemix.net/docs/infrastructure/BlockStorage/index.html#provisioning-with-performance)
+
+For a complete reference on the available arguments, check the following links:
+
+- [IBM Cloud Infrastructure (SoftLayer) API docs](http://sldn.softlayer.com/reference/services/SoftLayer_Virtual_Guest)
+- [IBM Cloud Provider (Argument Reference)](https://ibm-cloud.github.io/tf-ibm-docs/v0.11.1/r/compute_vm_instance.html)
+
+
 ### Prepare your local machine:
 
 The first thing you need to do is to clone this repo down and set up to use softlayer cli and ansible:
