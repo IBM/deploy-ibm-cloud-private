@@ -115,3 +115,15 @@ variable "docker_download_location" {
     description = "HTTP wget location for ICP provided Docker package"
     default = ""
 }
+
+variable "mcm_download_location" {
+    default = ""
+}
+
+variable "mcm_download_user" {
+    default = ""
+}
+
+variable "mcm_download_password" {
+    default = ""
+}

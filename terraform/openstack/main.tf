@@ -90,6 +90,9 @@ data "template_file" "bootstrap_init" {
         install_user_name = "${var.icp_install_user}"
         install_user_password = "${var.icp_install_user_password}"
         docker_download_location = "${var.docker_download_location}"
+        mcm_download_location = "${var.mcm_download_location}"
+        mcm_download_user = "${var.mcm_download_user}"
+        mcm_download_password = "${var.mcm_download_password}"
     }
 }
 
@@ -127,5 +130,10 @@ resource "null_resource" "icp-worker-scaler" {
     provisioner "file" {
         content     = "${file("${var.openstack_ssh_key_file}")}"
         destination = "/tmp/id_rsa.terraform"
+    }
+
+    provisioner "file" {
+        source      = "${path.module}/install_mcm.sh"
+        destination = "/tmp/install_mcm.sh"
     }
 }

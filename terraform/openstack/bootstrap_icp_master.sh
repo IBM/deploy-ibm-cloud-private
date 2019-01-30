@@ -201,4 +201,12 @@ cd "$ICP_ROOT_DIR/cluster"
     "$(pwd)":/installer/cluster $ICP_DOCKER_IMAGE install | \
     /usr/bin/tee install.log
 
+if [ ${mcm_download_location} != "" ]; then
+    chmod a+x /tmp/install_mcm.sh
+    /tmp/install_mcm.sh ${icp_version} ${mcm_download_location} \
+        ${mcm_download_user} ${mcm_download_password} $IP| \
+        /usr/bin/tee mcm_install.log
+fi
+
+
 exit 0
