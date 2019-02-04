@@ -127,7 +127,7 @@ else
 fi
 
 # Ensure the hostnames are resolvable
-IP=`/sbin/ip -4 -o addr show dev eth0 | awk '{split($4,a,"/");print a[1]}'`
+IP=`hostname -I | cut -f 1 -d ' '`
 /bin/echo "$IP $(hostname)" >> /etc/hosts
 
 # Download and configure IBM Cloud Private
