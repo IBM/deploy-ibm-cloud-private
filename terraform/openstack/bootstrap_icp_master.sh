@@ -62,7 +62,7 @@ if [ -f /etc/redhat-release ]; then
     yum -y remove docker docker-engine docker.io
     yum -y install socat 
     # Either install the icp docker version or from the repo
-    if [ ${docker_download_location} != "" ]; then
+    if [ ! -z ${docker_download_location} ]; then
         TMP_DIR="$(/bin/mktemp -d)"
         cd "$TMP_DIR"
         /usr/bin/wget -q "${docker_download_location}"
@@ -82,7 +82,7 @@ elif [ -f /etc/SuSE-release ]; then
     zypper -n remove docker docker-engine docker.io
     zypper -n install socat
     # Either install the icp docker version or from the repo
-    if [ ${docker_download_location} != "" ]; then
+    if [ ! -z ${docker_download_location} ]; then
         TMP_DIR="$(/bin/mktemp -d)"
         cd "$TMP_DIR"
         /usr/bin/wget -q "${docker_download_location}"
@@ -107,7 +107,7 @@ else
     ca-certificates curl software-properties-common python python-pip
 
     # Either install the icp docker version or from the repo
-    if [ ${docker_download_location} != "" ]; then
+    if [ ! -z ${docker_download_location} ]; then
         TMP_DIR="$(/bin/mktemp -d)"
         cd "$TMP_DIR"
         /usr/bin/wget -q "${docker_download_location}"
@@ -127,7 +127,7 @@ else
 fi
 
 # Ensure the hostnames are resolvable
-IP=`/sbin/ip -4 -o addr show dev eth0 | awk '{split($4,a,"/");print a[1]}'`
+IP=`hostname -I | cut -f 1 -d ' '`
 /bin/echo "$IP $(hostname)" >> /etc/hosts
 
 # Download and configure IBM Cloud Private
@@ -201,12 +201,22 @@ cd "$ICP_ROOT_DIR/cluster"
     "$(pwd)":/installer/cluster $ICP_DOCKER_IMAGE install | \
     /usr/bin/tee install.log
 
-if [ ${mcm_download_location} != "" ]; then
+if [ ! -z ${mcm_download_location} ]; then
     chmod a+x /tmp/install_mcm.sh
-    /tmp/install_mcm.sh ${icp_version} ${mcm_download_location} \
-        ${mcm_download_user} ${mcm_download_password} $IP| \
+    /tmp/install_mcm.sh $IP ${icp_version} ${mcm_download_location} \
+        ${mcm_download_user} ${mcm_download_password} | \
         /usr/bin/tee mcm_install.log
 fi
 
+if [ ! -z ${cam_docker_user} ]; then
+    chmod a+x /tmp/install_cam.sh
+    /tmp/install_cam.sh ONLINE $IP ${cam_version} ${cam_docker_user} ${cam_docker_password} \
+        ${cam_product_id} | /usr/bin/tee cam_install.log
+elif [ ! -z ${cam_download_location} ]; then
+    chmod a+x /tmp/install_cam.sh
+    /tmp/install_cam.sh OFFLINE $IP ${cam_version} ${cam_download_location} \
+        ${cam_download_user} ${cam_download_password} ${cam_product_id} | \
+        /usr/bin/tee cam_install.log
+fi
 
 exit 0

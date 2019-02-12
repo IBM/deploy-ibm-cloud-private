@@ -99,7 +99,7 @@ else
 fi
 
 # Ensure the hostname is resolvable
-IP=$(/sbin/ip -4 addr show | awk '/state UP/ {getline; split($2,ip,"/"); print ip[1]}')
+IP=`hostname -I | cut -f 1 -d ' '`
 /bin/echo "$IP $(hostname)" >> /etc/hosts
 
 exit 0

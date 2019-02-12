@@ -116,6 +116,7 @@ variable "docker_download_location" {
     default = ""
 }
 
+#MCM installation related variables
 variable "mcm_download_location" {
     default = ""
 }
@@ -125,5 +126,40 @@ variable "mcm_download_user" {
 }
 
 variable "mcm_download_password" {
+    default = ""
+}
+
+# CAM common variables
+variable "cam_version" {
+    default = "3.1.0"
+    description = "Version of Cloud Automation Manager to install"
+}
+
+variable "cam_product_id" {
+    default = ""
+    description = "Product Id text for Cloud Automation Manager (EE)"
+}
+
+# CAM variables required for online installation
+variable "cam_docker_user" {
+    default = ""
+    description = "Docker Store user name, needs subscription to CAM"
+}
+
+variable "cam_docker_password" {
+    default = ""
+    description = "Docker Store API key OR password"
+}
+
+# CAM variables required for offline installation
+variable "cam_download_location" {
+    default = ""
+}
+
+variable "cam_download_user" {
+    default = ""
+}
+
+variable "cam_download_password" {
     default = ""
 }
