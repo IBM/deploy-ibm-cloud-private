@@ -15,6 +15,24 @@
 #
 ################################################################
 
+#Set SMT level for worker
+/usr/sbin/ppc64_cpu --smt=${SMTvalue_worker}
+
+cat >> /etc/systemd/system/smt.service <<EOL
+[Unit]
+Description=Disable SMT
+After=syslog.target
+[Service]
+Type=simple
+ExecStart=/usr/sbin/ppc64_cpu --smt=${SMTvalue_worker}
+TimeoutSec=300
+[Install]
+WantedBy=multi-user.target
+EOL
+
+/bin/systemctl daemon-reload
+/bin/systemctl enable smt.service
+
 # Enable NTP
 /usr/bin/timedatectl set-ntp on
 # Need to set vm.max_map_count to at least 262144

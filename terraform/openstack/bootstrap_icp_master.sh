@@ -15,6 +15,24 @@
 #
 ################################################################
 
+#Set SMT level for master
+/usr/sbin/ppc64_cpu --smt=${SMTvalue_master}
+
+cat >> /etc/systemd/system/smt.service <<EOL
+[Unit]
+Description=Disable SMT
+After=syslog.target
+[Service]
+Type=simple
+ExecStart=/usr/sbin/ppc64_cpu --smt=${SMTvalue_master}
+TimeoutSec=300
+[Install]
+WantedBy=multi-user.target
+EOL
+
+/bin/systemctl daemon-reload
+/bin/systemctl enable smt.service
+
 # Determine icp version
 IFS='.' read -r -a iver <<< ${icp_version}
 # fill in any empty digits (some only had 3)

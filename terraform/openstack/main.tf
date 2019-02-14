@@ -100,6 +100,7 @@ data "template_file" "bootstrap_init" {
         cam_download_location = "${var.cam_download_location}"
         cam_download_user = "${var.cam_download_user}"
         cam_download_password = "${var.cam_download_password}"
+        SMTvalue_master = "${var.SMTvalue_master}"
     }
 }
 
@@ -108,6 +109,7 @@ data "template_file" "bootstrap_worker" {
 
     vars {
         docker_download_location = "${var.docker_download_location}"
+        SMTvalue_worker = "${var.SMTvalue_worker}"
     }
 }
 

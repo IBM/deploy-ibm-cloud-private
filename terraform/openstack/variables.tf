@@ -163,3 +163,13 @@ variable "cam_download_user" {
 variable "cam_download_password" {
     default = ""
 }
+
+variable "SMTvalue_master" {
+    description = ""
+    default = 8
+}
+
+variable "SMTvalue_worker" {
+    description = ""
+    default = 8
+}
