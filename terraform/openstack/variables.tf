@@ -98,6 +98,11 @@ variable "icp_download_location" {
     default = "http://LOCATION_OF_ICP_ENTERPRISE_EDITION.tar.gz"
 }
 
+variable "icp_default_admin_password" {
+    description = "Password to use for default admin user"
+    default = "S3cure-icp-admin-passw0rd-default"
+}
+
 variable "icp_disabled_services" {
     type = "list"
     description = "List of ICP services to disable (e.g., va, monitoring or metering)"
@@ -113,5 +118,53 @@ variable "instance_prefix" {
 
 variable "docker_download_location" {
     description = "HTTP wget location for ICP provided Docker package"
+    default = ""
+}
+
+#MCM installation related variables
+variable "mcm_download_location" {
+    default = ""
+}
+
+variable "mcm_download_user" {
+    default = ""
+}
+
+variable "mcm_download_password" {
+    default = ""
+}
+
+# CAM common variables
+variable "cam_version" {
+    default = "3.1.0"
+    description = "Version of Cloud Automation Manager to install"
+}
+
+variable "cam_product_id" {
+    default = ""
+    description = "Product Id text for Cloud Automation Manager (EE)"
+}
+
+# CAM variables required for online installation
+variable "cam_docker_user" {
+    default = ""
+    description = "Docker Store user name, needs subscription to CAM"
+}
+
+variable "cam_docker_password" {
+    default = ""
+    description = "Docker Store API key OR password"
+}
+
+# CAM variables required for offline installation
+variable "cam_download_location" {
+    default = ""
+}
+
+variable "cam_download_user" {
+    default = ""
+}
+
+variable "cam_download_password" {
     default = ""
 }

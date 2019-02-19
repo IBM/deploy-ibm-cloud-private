@@ -30,7 +30,7 @@ if [ -f /etc/redhat-release ]; then
         # Make sure we're not running some old version of docker
         yum -y remove docker docker-engine docker.io
         # Either install the icp docker version or from the repo
-        if [ ${docker_download_location} != "" ]; then
+        if [ ! -z ${docker_download_location} ]; then
             TMP_DIR="$(/bin/mktemp -d)"
             cd "$TMP_DIR"
             /usr/bin/wget -q "${docker_download_location}"
@@ -49,7 +49,7 @@ elif [ -f /etc/SuSE-release ]; then
         # Make sure we're not running some old version of docker
         zypper -n remove docker docker-engine docker.io
         # Either install the icp docker version or from the repo
-        if [ ${docker_download_location} != "" ]; then
+        if [ ! -z ${docker_download_location} ]; then
             TMP_DIR="$(/bin/mktemp -d)"
             cd "$TMP_DIR"
             /usr/bin/wget -q "${docker_download_location}"
@@ -79,7 +79,7 @@ else
         software-properties-common python-minimal
 
         # Either install the icp docker version or from the repo
-        if [ ${docker_download_location} != "" ]; then
+        if [ ! -z ${docker_download_location} ]; then
             TMP_DIR="$(/bin/mktemp -d)"
             cd "$TMP_DIR"
             /usr/bin/wget -q "${docker_download_location}"
@@ -99,7 +99,7 @@ else
 fi
 
 # Ensure the hostname is resolvable
-IP=`/sbin/ip -4 -o addr show dev eth0 | awk '{split($4,a,"/");print a[1]}'`
+IP=`hostname -I | cut -f 1 -d ' '`
 /bin/echo "$IP $(hostname)" >> /etc/hosts
 
 exit 0

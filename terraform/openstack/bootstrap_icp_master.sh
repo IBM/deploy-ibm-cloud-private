@@ -62,7 +62,7 @@ if [ -f /etc/redhat-release ]; then
     yum -y remove docker docker-engine docker.io
     yum -y install socat 
     # Either install the icp docker version or from the repo
-    if [ ${docker_download_location} != "" ]; then
+    if [ ! -z ${docker_download_location} ]; then
         TMP_DIR="$(/bin/mktemp -d)"
         cd "$TMP_DIR"
         /usr/bin/wget -q "${docker_download_location}"
@@ -82,7 +82,7 @@ elif [ -f /etc/SuSE-release ]; then
     zypper -n remove docker docker-engine docker.io
     zypper -n install socat
     # Either install the icp docker version or from the repo
-    if [ ${docker_download_location} != "" ]; then
+    if [ ! -z ${docker_download_location} ]; then
         TMP_DIR="$(/bin/mktemp -d)"
         cd "$TMP_DIR"
         /usr/bin/wget -q "${docker_download_location}"
@@ -107,7 +107,7 @@ else
     ca-certificates curl software-properties-common python python-pip
 
     # Either install the icp docker version or from the repo
-    if [ ${docker_download_location} != "" ]; then
+    if [ ! -z ${docker_download_location} ]; then
         TMP_DIR="$(/bin/mktemp -d)"
         cd "$TMP_DIR"
         /usr/bin/wget -q "${docker_download_location}"
@@ -127,7 +127,7 @@ else
 fi
 
 # Ensure the hostnames are resolvable
-IP=`/sbin/ip -4 -o addr show dev eth0 | awk '{split($4,a,"/");print a[1]}'`
+IP=`hostname -I | cut -f 1 -d ' '`
 /bin/echo "$IP $(hostname)" >> /etc/hosts
 
 # Download and configure IBM Cloud Private
@@ -189,6 +189,9 @@ else
     /bin/sed -i 's/.*disabled_management_services:.*/disabled_management_services: [ "" ]/g' cluster/config.yaml
 
 fi
+if [ -n "${icp_default_admin_password}" ]; then
+    /bin/sed -i 's/.*default_admin_password:.*/default_admin_password: '${icp_default_admin_password}'/g' cluster/config.yaml
+fi
 
 # Setup the private key for the ICP cluster (injected at deploy time)
 /bin/cp /tmp/id_rsa.terraform \
@@ -200,5 +203,23 @@ cd "$ICP_ROOT_DIR/cluster"
 /usr/bin/docker run -e LICENSE=accept --net=host -t -v \
     "$(pwd)":/installer/cluster $ICP_DOCKER_IMAGE install | \
     /usr/bin/tee install.log
+
+if [ ! -z ${mcm_download_location} ]; then
+    chmod a+x /tmp/install_mcm.sh
+    /tmp/install_mcm.sh $IP ${icp_version} ${icp_default_admin_password} ${mcm_download_location} \
+        ${mcm_download_user} ${mcm_download_password} | \
+        /usr/bin/tee mcm_install.log
+fi
+
+if [ ! -z ${cam_docker_user} ]; then
+    chmod a+x /tmp/install_cam.sh
+    /tmp/install_cam.sh ONLINE $IP ${cam_version} ${icp_default_admin_password} ${cam_docker_user} ${cam_docker_password} \
+        ${cam_product_id} | /usr/bin/tee cam_install.log
+elif [ ! -z ${cam_download_location} ]; then
+    chmod a+x /tmp/install_cam.sh
+    /tmp/install_cam.sh OFFLINE $IP ${cam_version} ${icp_default_admin_password} ${cam_download_location} \
+        ${cam_download_user} ${cam_download_password} ${cam_product_id} | \
+        /usr/bin/tee cam_install.log
+fi
 
 exit 0

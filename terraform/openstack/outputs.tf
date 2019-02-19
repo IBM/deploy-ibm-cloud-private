@@ -18,5 +18,9 @@ output "icp-master-vm-ip" {
 }
 
 output "icp-worker-vm-ips" {
-   value = "${openstack_compute_instance_v2.icp-worker-vm.*.network.0.fixed_ip_v4}"
+    value = "${openstack_compute_instance_v2.icp-worker-vm.*.network.0.fixed_ip_v4}"
+}
+
+output "icp_default_admin_password" {
+    value = "${var.icp_default_admin_password}"
 }

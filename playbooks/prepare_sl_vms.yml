@@ -53,7 +53,9 @@
       when: ansible_os_family == 'Debian'
 
     - name: disable resolvconf updates
-      command: resolvconf --disable-updates
+      command: /usr/bin/dpkg -l resolvconf &>dev/null &&\
+               resolvconf --disable-updates ||\
+               echo "resolvconf not currently installed."
       when: ansible_os_family == 'Debian'
 
     - name: add alternative dnsmasq resolv.conf
@@ -166,7 +168,7 @@
         mode: 0755
 
     - name: Build installer image
-      command: docker build -t icp-on-sl /root/cluster
+      command: docker build --network host -t icp-on-sl /root/cluster
 
     - name: Run the following command to deploy IBM Cloud Private
       debug:

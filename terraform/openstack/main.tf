@@ -45,7 +45,7 @@ resource "openstack_compute_instance_v2" "icp-worker-vm" {
     user_data = "${data.template_file.bootstrap_worker.rendered}"
 
     provisioner "local-exec" {
-        command = "if ping -c 1 -W 1 $MASTER_IP; then ssh -o 'StrictHostKeyChecking no' -i $KEY_FILE USER@$MASTER_IP 'if [[ -f /tmp/icp_worker_scaler.sh ]]; then chmod a+x /tmp/icp_worker_scaler.sh; /tmp/icp_worker_scaler.sh a ${var.icp_edition} ${self.network.0.fixed_ip_v4}; fi'; fi"
+        command = "if ping -c 1 -W 1 $MASTER_IP; then ssh -o 'StrictHostKeyChecking no' -i $KEY_FILE $USER@$MASTER_IP 'if [[ -f /tmp/icp_worker_scaler.sh ]]; then chmod a+x /tmp/icp_worker_scaler.sh; /tmp/icp_worker_scaler.sh a ${var.icp_edition} ${self.network.0.fixed_ip_v4}; fi'; fi"
         environment {
             MASTER_IP = "${openstack_compute_instance_v2.icp-master-vm.network.0.fixed_ip_v4}"
             USER = "${var.icp_install_user}"
@@ -86,10 +86,21 @@ data "template_file" "bootstrap_init" {
         icp_architecture = "${var.icp_architecture}"
         icp_edition = "${var.icp_edition}"
         icp_download_location = "${var.icp_download_location}"
+        icp_default_admin_password = "${var.icp_default_admin_password}"
         icp_disabled_services = "${join(", ",formatlist("\"%s\"",var.icp_disabled_services))}"
         install_user_name = "${var.icp_install_user}"
         install_user_password = "${var.icp_install_user_password}"
         docker_download_location = "${var.docker_download_location}"
+        mcm_download_location = "${var.mcm_download_location}"
+        mcm_download_user = "${var.mcm_download_user}"
+        mcm_download_password = "${var.mcm_download_password}"
+        cam_version = "${var.cam_version}"
+        cam_docker_user = "${var.cam_docker_user}"
+        cam_docker_password = "${var.cam_docker_password}"
+        cam_product_id = "${var.cam_product_id}"
+        cam_download_location = "${var.cam_download_location}"
+        cam_download_user = "${var.cam_download_user}"
+        cam_download_password = "${var.cam_download_password}"
     }
 }
 
@@ -127,5 +138,15 @@ resource "null_resource" "icp-worker-scaler" {
     provisioner "file" {
         content     = "${file("${var.openstack_ssh_key_file}")}"
         destination = "/tmp/id_rsa.terraform"
+    }
+
+    provisioner "file" {
+        source      = "${path.module}/install_mcm.sh"
+        destination = "/tmp/install_mcm.sh"
+    }
+
+    provisioner "file" {
+        source      = "${path.module}/install_cam.sh"
+        destination = "/tmp/install_cam.sh"
     }
 }

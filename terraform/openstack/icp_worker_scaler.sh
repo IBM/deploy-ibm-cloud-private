@@ -19,16 +19,19 @@
 ICP_ROOT_DIR="/opt/ibm-cloud-private-${2}"
 IPS=${3}
 
+ICP_DOCKER_IMAGE=`sudo /usr/bin/docker ps -a | /bin/grep -i 'inception' | head -1 | /usr/bin/awk '{print $2}'`
+if [[ $? -gt 0 ]]; then
+    /bin/echo "Error using docker, skipping." >&2
+    exit 1
+fi
+cd "$ICP_ROOT_DIR/cluster"
+
 if [[ ${1} == a* ]]; then
-    ICP_DOCKER_IMAGE=`sudo /usr/bin/docker ps -a | /bin/grep -i 'inception' | head -1 | /usr/bin/awk '{print $2}'`
-    cd "$ICP_ROOT_DIR/cluster"
     sudo /usr/bin/docker run -e LICENSE=accept --net=host \
         -v "$(pwd)":/installer/cluster \
         $ICP_DOCKER_IMAGE worker -l $IPS | \
         sudo /usr/bin/tee -a add_remove_worker.log
 elif [[ ${1} == r* ]]; then
-    ICP_DOCKER_IMAGE=`sudo /usr/bin/docker ps -a | /bin/grep -i 'inception' | head -1 | /usr/bin/awk '{print $2}'`
-    cd "$ICP_ROOT_DIR/cluster"
     sudo /usr/bin/docker run -e LICENSE=accept --net=host \
         -v "$(pwd)":/installer/cluster \
         $ICP_DOCKER_IMAGE uninstall -l $IPS | \
@@ -36,4 +39,5 @@ elif [[ ${1} == r* ]]; then
 else
    echo "None of the condition met"
 fi
+
 exit 0

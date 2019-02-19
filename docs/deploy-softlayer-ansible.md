@@ -5,15 +5,15 @@
 The first thing you need to do is to clone this repo down and set up to use softlayer cli and ansible:
 
 ```bash
-$ git clone https://github.com/IBM/deploy-ibm-cloud-private.git
-$ cd deploy-ibm-cloud-private
-$ sudo pip install -r requirements.txt
+git clone https://github.com/IBM/deploy-ibm-cloud-private.git
+cd deploy-ibm-cloud-private
+sudo pip install -r requirements.txt
 ```
 
 Next you need to prepare the softlayer CLI with your credentials:
 
 ```bash
-$ slcli config setup
+slcli config setup
 Username: XXXXXX
 API Key or Password: XXXXXXXXXXXXXXXXXXXXX
 Endpoint (public|private|custom) [public]:
@@ -32,7 +32,7 @@ Are you sure you want to write settings to "/home/XXXX/.softlayer"? [Y/n]: Y
 Create a SSH key to use:
 
 ```bash
-$ ssh-keygen -f cluster/ssh_key -P ""
+ssh-keygen -f cluster/ssh_key -P ""
 Generating public/private rsa key pair.
 Overwrite (y/n)? y
 Your identification has been saved in cluster/ssh_key
@@ -95,8 +95,8 @@ Ansible playbook. This playbook will clean up some Softlayer quirks, install Doc
 softlayer dynamic inventory dependencies into the ICP installer.
 
 ```bash
-$ ssh-add cluster/ssh_key
-$ ansible-playbook -i hosts playbooks/prepare_sl_vms.yml
+ssh-add cluster/ssh_key
+ansible-playbook -i hosts playbooks/prepare_sl_vms.yml
 
 PLAY [ensure connectivity to all nodes] **********************************************************************************************************************************************
 
@@ -121,7 +121,7 @@ _Note: Sometimes this last task will error due to a strange dnsmasq issue. Runni
 Once that playbook has finished running we can use our modified deployer to deploy ICP (the final line in the previous command will give you the command syntax, you just need to plug in your SL credentials)
 
 ```bash
-$ cat ~/.softlayer
+cat ~/.softlayer
 [softlayer]
 username = XXXXX
 api_key = YYYY
