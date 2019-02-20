@@ -15,6 +15,24 @@
 #
 ################################################################
 
+#Allow SMT levels to be set for the master node
+if [ "${icp_architecture}" == "ppc64le" ] && [ ! -z "${smt_value_master}" ] && [ -f /usr/sbin/ppc64_cpu ]; then
+    /usr/sbin/ppc64_cpu --smt=${smt_value_master}
+    cat >> /etc/systemd/system/smt.service <<EOL
+[Unit]
+Description=Set SMT
+After=syslog.target
+[Service]
+Type=simple
+ExecStart=/usr/sbin/ppc64_cpu --smt=${smt_value_master}
+TimeoutSec=300
+[Install]
+WantedBy=multi-user.target
+EOL
+    /bin/systemctl daemon-reload
+    /bin/systemctl enable smt.service
+fi
+
 # Determine icp version
 IFS='.' read -r -a iver <<< ${icp_version}
 # fill in any empty digits (some only had 3)

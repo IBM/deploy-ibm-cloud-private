@@ -168,3 +168,9 @@ variable "cam_download_user" {
 variable "cam_download_password" {
     default = ""
 }
+
+#Variable required to set the desired SMT level for master node
+variable "smt_value_master" {
+    description = "Number of threads per core. Value can be any of: on, off, 1, 2, 4, 8"
+    default = ""
+}

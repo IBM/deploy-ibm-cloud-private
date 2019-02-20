@@ -101,6 +101,7 @@ data "template_file" "bootstrap_init" {
         cam_download_location = "${var.cam_download_location}"
         cam_download_user = "${var.cam_download_user}"
         cam_download_password = "${var.cam_download_password}"
+        smt_value_master = "${var.smt_value_master}"
     }
 }
 
