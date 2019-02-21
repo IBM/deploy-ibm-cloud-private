@@ -103,12 +103,21 @@ variable "icp_default_admin_password" {
     default = "S3cure-icp-admin-passw0rd-default"
 }
 
+# ${icp_enabled_services} will take preference for repeated values
 variable "icp_disabled_services" {
     type = "list"
-    description = "List of ICP services to disable (e.g., va, monitoring or metering)"
+    description = "List of ICP services to disable (e.g. istio, monitoring or metering)"
     default = [
-	"va"
+        "istio", "vulnerability-advisor", "storage-glusterfs", "storage-minio",
+        "platform-security-netpols", "node-problem-detector-draino",
+        "multicluster-hub", "multicluster-endpoint"
     ]
+}
+
+variable "icp_enabled_services" {
+    type = "list"
+    description = "List of ICP services to enable (e.g., istio, monitoring or metering)"
+    default = []
 }
 
 variable "instance_prefix" {
