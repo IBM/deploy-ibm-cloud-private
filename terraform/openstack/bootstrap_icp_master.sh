@@ -184,8 +184,8 @@ if [ -n "${install_user_password}" ]; then
     /bin/sed -i 's/.*ansible_become_password:.*/ansible_become_password: "'${install_user_password}'"/g' cluster/config.yaml
 fi
 # For each service remove default entry and add again under management_services
-IFS=',' read -r -a disabled_services <<< ${icp_disabled_services}
-IFS=',' read -r -a enabled_services <<< ${icp_enabled_services}
+IFS=',' read -r -a disabled_services <<< "${icp_disabled_services}"
+IFS=',' read -r -a enabled_services <<< "${icp_enabled_services}"
 for element in $${disabled_services[*]}; do
     if [ -n "$element" ]; then
         /bin/sed -i "/^  $element: /d" cluster/config.yaml
