@@ -109,7 +109,7 @@ variable "icp_disabled_services" {
     description = "List of ICP services to disable (e.g., istio, monitoring or metering)"
     default = [
         "istio", "vulnerability-advisor", "storage-glusterfs", "storage-minio",
-        "platform-security-netpolst", "node-problem-detector-draino",
+        "platform-security-netpols", "node-problem-detector-draino",
         "multicluster-hub", "multicluster-endpoint"
     ]
 }
