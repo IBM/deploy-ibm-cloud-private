@@ -12,10 +12,13 @@ cpus = '6'
 
 # should be sufficent on laptops with 16GiB of RAM (but you won't want to run any apps
 # while this vm is running)
-memory = '6144'
+memory = '8192'
 
 # Update version to pull a specific version i.e. version = '2.1.0-beta-1'
-version = "3.1.1"
+version = "3.1.2"
+
+# Default admin password - ICP 3.1.2 now requires 32 characters by default
+default_admin_password = "S3cure-icp-admin-passw0rd-default"
 
 # host-only network segment - in most cases you do not have to change this value
 # on some systems this network segment may overlap another network already on your
@@ -79,6 +82,7 @@ private_registry_enabled: false
 private_registry_server: placeholder.com
 docker_username: placeholder
 docker_password: placeholder
+default_admin_password: placeholder
 "
 
 vm_name = "IBM-Cloud-Private-dev-edition"
@@ -128,6 +132,7 @@ if File.exist?(".private")
   private_registry_server = $private_registry_server
   docker_username = $docker_username
   docker_password = $docker_password
+  default_admin_password = $default_admin_password
 end
 
 docker_mirror = ''
@@ -577,7 +582,7 @@ SCRIPT
 configure_icp_install = <<SCRIPT
 cat > /home/vagrant/cluster/hosts <<'EOF'
 [master]
-#{base_segment}.100 kubelet_extra_args='["--fail-swap-on=false","--eviction-hard=memory.available<1Mi,nodefs.available<1Mi,nodefs.inodesFree<1%,imagefs.available<1Mi,imagefs.inodesFree<1%", "--image-gc-high-threshold=100%", "--image-gc-low-threshold=100%"]'
+#{base_segment}.100 kubelet_extra_args='["--fail-swap-on=false","--eviction-hard=memory.available<1Mi,nodefs.available<1Mi,nodefs.inodesFree<1%,imagefs.available<1Mi,imagefs.inodesFree<1%", "--image-gc-high-threshold=100%", "--image-gc-low-threshold=99%"]'
 
 [worker]
 #{base_segment}.101 kubelet_extra_args='["--fail-swap-on=false"]'
@@ -596,6 +601,7 @@ sed -i "s|private_registry_enabled\: false|private_registry_enabled\: #{private_
 sed -i "s|private_registry_server\: placeholder.com|private_registry_server\: #{private_registry_server}|g" /home/vagrant/cluster/config.yaml
 sed -i "s|docker_username\: placeholder|docker_username\: #{docker_username}|g" /home/vagrant/cluster/config.yaml
 sed -i "s|docker_password\: placeholder|docker_password\: #{docker_password}|g" /home/vagrant/cluster/config.yaml
+sed -i "s|default_admin_password\: placeholder|default_admin_password\: #{default_admin_password}|g" /home/vagrant/cluster/config.yaml
 cat /home/vagrant/cluster/config.yaml
 SCRIPT
 
@@ -662,21 +668,6 @@ sudo docker run -e LICENSE=#{license} --net=host -v "$(pwd)/cluster":/installer/
 # 	echo "cat icp_install_log" 1>&3
 # 	exit 1
 # fi
-SCRIPT
-
-install_kubectl = <<SCRIPT
-sudo curl -o /tmp/kubectl -LO https://storage.googleapis.com/kubernetes-release/release/v1.11.0/bin/linux/amd64/kubectl
-sudo chmod +x /tmp/kubectl
-sudo mv /tmp/kubectl /usr/local/bin/kubectl
-sudo mkdir /home/vagrant/kubectl-certs
-sudo cp /home/vagrant/cluster/cfc-certs/kubernetes/kubecfg.crt /home/vagrant/kubectl-certs/kubecfg.crt
-sudo cp /home/vagrant/cluster/cfc-certs/kubernetes/kubecfg.key /home/vagrant/kubectl-certs/kubecfg.key
-sudo chown -R vagrant:vagrant /home/vagrant/kubectl-certs/
-kubectl config set-cluster icp --server=https://#{base_segment}.100:8001 --insecure-skip-tls-verify=true &> /dev/null
-kubectl config set-context icp --cluster=icp &> /dev/null
-kubectl config set-credentials icp --client-certificate=/home/vagrant/kubectl-certs/kubecfg.crt --client-key=/home/vagrant/kubectl-certs/kubecfg.key &> /dev/null
-kubectl config set-context icp --user=icp &> /dev/null
-kubectl config use-context icp
 SCRIPT
 
 create_persistant_volumes = <<SCRIPT
@@ -965,8 +956,15 @@ EOF
 kubectl create -f /home/vagrant/volumes.yaml
 SCRIPT
 
+install_kubectl = <<SCRIPT
+sudo curl -ko /tmp/kubectl -LO https://#{base_segment}.100:8443/api/cli/kubectl-linux-amd64
+sudo chmod +x /tmp/kubectl
+sudo mv /tmp/kubectl /usr/local/bin/kubectl
+sudo mkdir /home/vagrant/kubectl-certs
+SCRIPT
+
 install_helm = <<SCRIPT
-sudo curl -o /tmp/helm.tar.gz -LO https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz
+sudo curl -kLo /tmp/helm.tar.gz https://#{base_segment}.100:8443/api/cli/helm-linux-amd64.tar.gz
 sudo tar xzf /tmp/helm.tar.gz -C /tmp/
 sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
 sudo rm -f /tmp/helm.tar.gz
@@ -975,6 +973,13 @@ export HELM_HOME=/usr/local/bin/helm &> /dev/null
 echo "HELM_HOME=/usr/local/bin/helm" >> ~/.bash_profile &> /dev/null
 sudo chown -R vagrant:vagrant /usr/local/bin/helm &> /dev/null
 helm init --client-only &> /dev/null
+SCRIPT
+
+install_cloudctl = <<SCRIPT
+sudo wget https://#{base_segment}.100:8443/api/cli/cloudctl-linux-amd64 --no-check-certificate
+sudo chmod 755 cloudctl-linux-amd64
+sudo mv cloudctl-linux-amd64 /usr/local/bin/cloudctl
+cloudctl login -a https://#{base_segment}.100:8443 --skip-ssl-validation -u admin -p #{default_admin_password} -c id-mycluster-account -n default
 SCRIPT
 
 install_startup_script = <<SCRIPT
@@ -1127,7 +1132,7 @@ cat << 'EOF'
 #                  The web console is now available at:                       #
 #                                                                             #
 #                          https://#{base_segment}.100:8443                        #
-#                   default username/password is admin/admin                  #
+#        username/password is admin/#{default_admin_password}         #
 #                                                                             #
 #                          Documentation available at:                        #
 #               https://www.ibm.com/support/knowledgecenter/SSBS6K            #
@@ -1173,8 +1178,9 @@ Vagrant.configure(2) do |config|
   end
   config.vm.provision "shell", privileged: false, inline: install_icp, keep_color: true, name: "install_icp"
   config.vm.provision "shell", privileged: false, inline: install_kubectl, keep_color: true, name: "install_kubectl"
-  config.vm.provision "shell", privileged: false, inline: create_persistant_volumes, keep_color: true, name: "create_persistant_volumes"
   config.vm.provision "shell", privileged: false, inline: install_helm, keep_color: true, name: "install_helm"
+  config.vm.provision "shell", privileged: false, inline: install_cloudctl, keep_color: true, name: "install_cloudctl"
+  config.vm.provision "shell", privileged: false, inline: create_persistant_volumes, keep_color: true, name: "create_persistant_volumes"
   config.vm.provision "shell", privileged: false, inline: install_startup_script, keep_color: true, name: "install_startup_script"
   config.vm.provision "shell", privileged: false, inline: install_shutdown_script, keep_color: true, name: "install_shutdown_script"
   config.vm.provision "shell", privileged: false, inline: install_shellinabox, keep_color: true, name: "install_shellinabox"
