@@ -255,7 +255,7 @@ sudo apt-get update --yes --quiet
 sudo apt-get install --yes --quiet --target-release=xenial-backports lxd lxd-client bridge-utils dnsmasq thin-provisioning-tools \
     curl linux-image-extra-$(uname -r) linux-image-extra-virtual apt-transport-https ca-certificates software-properties-common \
     docker-ce python-setuptools python-pip build-essential python-dev nfs-kernel-server nfs-common aufs-tools ntp criu ipvsadm \
-    rng-tools util-linux socat openssh-server
+    rng-tools util-linux socat openssh-server openssl
 sudo -H pip install --upgrade pip
 sudo -H pip install docker
 sudo usermod -aG lxd vagrant
