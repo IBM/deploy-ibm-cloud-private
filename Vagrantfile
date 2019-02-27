@@ -1075,8 +1075,6 @@ if [ "60" -gt "$count" ]; then
 fi
 SCRIPT
 
-happy_dance = <<SCRIPT
-curl -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.89 Safari/537.36" -s 'http://bit.ly/2fqp98V' > /dev/null || true
 cat << 'EOF'
 
                                 O MMM .MM  MM7
@@ -1185,12 +1183,10 @@ Vagrant.configure(2) do |config|
   config.vm.provision "shell", privileged: false, inline: install_shutdown_script, keep_color: true, name: "install_shutdown_script"
   config.vm.provision "shell", privileged: false, inline: install_shellinabox, keep_color: true, name: "install_shellinabox"
   # config.vm.provision "shell", privileged: false, inline: ensure_services_up, keep_color: true, name: "ensure_services_up", run: "always"
-  config.vm.provision "shell", privileged: false, inline: happy_dance, keep_color: true, name: "happy_dance"
 
   config.vm.define "icp" do |icp|
     icp.vm.box = "bento/ubuntu-16.04"
     icp.vm.box_version = "201812.27.0"
-    # icp.vm.box_version = "201808.24.0"
     icp.vm.hostname = "master.icp"
     icp.vm.box_check_update = true
     icp.vm.network "private_network", ip: "#{base_segment}.100", adapter_ip: "#{base_segment}.1", netmask: "255.255.255.0", auto_config: false
