@@ -8,8 +8,8 @@ license_accepted
 cluster/ssh_key
 cluster/ssh_key.pub
 
-playbooks/cluster-vms.json
-playbooks/cluster-vgs.json
+nutanix/cluster-vms.json
+nutanix/cluster-vgs.json
 
 # terraform
 .tfstate
