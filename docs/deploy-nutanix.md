@@ -110,8 +110,8 @@ There are 4 steps necessary for deployment, that have to run in sequence:
 
 In addition there's 2 teardown steps in case you'd like to clean your environment:
 
-  - Nutanix [teardown](nx_teardown.yml) removes all previously created VMs in the Nutanix cluster
-  - ICP [teardown](icp_teardown.yml) removes the ICP images and configuration in the deployer
+  - Nutanix [teardown](../nutanix/nx_teardown.yml) removes all previously created VMs in the Nutanix cluster
+  - ICP [teardown](../nutanix/icp_teardown.yml) removes the ICP images and configuration in the deployer
 
 And for convenience there's also an [install](../nutanix/nx-icp-install.yml) step that runs all 4 main deployment steps in sequence and a respective [uninstall](../nutanix/nx-icp-install.yml) step that runs both teardown steps in sequence.
 
