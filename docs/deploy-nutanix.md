@@ -79,7 +79,7 @@ Each element in the "vgs" array corresponds to a VG that will be created in the 
 | disks (optional if clones is defined) | [ 128849018880 ] | List of size in bytes for new disks to be created for this VG |
 | body | vg-create.j2 | The default VG body template to use when creating the VG |
 
-Finally, you can map VGs to VMs by defining a list in the map_vms_vgs variable. Each entry in the list is a VM-VG pair that associates a VM name to a VG name. If you want to map multiple VGs to a VM or vice-versa just define multiple entries. You can see an example of such list of mappings [here](vars/nutanix.yml).
+Finally, you can map VGs to VMs by defining a list in the map_vms_vgs variable. Each entry in the list is a VM-VG pair that associates a VM name to a VG name. If you want to map multiple VGs to a VM or vice-versa just define multiple entries. You can see an example of such list of mappings [here](../nutanix/vars/nutanix.yml).
 
 ### Configure your ICP installation settings
 
