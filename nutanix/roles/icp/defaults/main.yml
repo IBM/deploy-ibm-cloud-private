@@ -1,0 +1,43 @@
+---
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Author: Marcelo Perazolo <mperazol@us.ibm.com>
+#---
+
+# ICP Install settings
+do_verbose: True
+do_debug: True
+
+# location of installer configuration
+icp_conf: "/opt/icp"
+
+# version of icp to install
+icp_version: "3.1.1"
+
+# version of inception image... use "-ee" suffix for enterprise edition
+icp_inception_version: "{{ icp_version }}-ee"
+
+# location of icp images to use
+icp_image_x86: "~/ibm-cloud-private-x86_64-3.1.1.tar.gz"
+icp_image_ppc: "~/ibm-cloud-private-ppc64le-3.1.1.tar.gz"
+
+# where the installer is currently running... if x86, convert "x86_64" to "amd64"
+icp_installer_arch: "{{ (ansible_architecture == 'x86_64') | ternary('amd64', ansible_architecture) }}"
+icp_installer_image: "{{ (ansible_architecture == 'ppc64le') | ternary(icp_image_ppc, icp_image_x86) }}"
+
+# arch of target nodes... use "amd64" for x86, "ppc64le" for power
+icp_target_arch: "ppc64le"
+icp_target_image: "{{ (icp_target_arch == 'ppc64le') | ternary(icp_image_ppc, icp_image_x86) }}"
+
+# computed: the name of the inception image to use in the installer
+icp_inception: "ibmcom/icp-inception-{{ icp_installer_arch }}:{{ icp_inception_version }}"

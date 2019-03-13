@@ -1,0 +1,34 @@
+[master]
+{% for key, value in my_vms.items() %}
+{% if value.type == 'master' %}
+{{ value.address }} ansible_user="root" ansible_ssh_common_args="-oPubkeyAuthentication=yes" ansible_port="22"
+{% endif %}
+{% endfor %}
+
+[proxy]
+{% for key, value in my_vms.items() %}
+{% if value.type == 'master' %}
+{{ value.address }} ansible_user="root" ansible_ssh_common_args="-oPubkeyAuthentication=yes" ansible_port="22"
+{% endif %}
+{% endfor %}
+
+[worker]
+{% for key, value in my_vms.items() %}
+{% if value.type == 'worker' %}
+{{ value.address }} ansible_user="root" ansible_ssh_common_args="-oPubkeyAuthentication=yes" ansible_port="22"
+{% endif %}
+{% endfor %}
+
+[management]
+{% for key, value in my_vms.items() %}
+{% if value.type == 'management' %}
+{{ value.address }} ansible_user="root" ansible_ssh_common_args="-oPubkeyAuthentication=yes" ansible_port="22"
+{% endif %}
+{% endfor %}
+
+[va]
+{% for key, value in my_vms.items() %}
+{% if value.type == 'va' %}
+{{ value.address }} ansible_user="root" ansible_ssh_common_args="-oPubkeyAuthentication=yes" ansible_port="22"
+{% endif %}
+{% endfor %}

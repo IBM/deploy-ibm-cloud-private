@@ -1,0 +1,47 @@
+---
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Author: Marcelo Perazolo <mperazol@us.ibm.com>
+#---
+
+    - name: load ICP
+      shell: tar xf {{ icp_installer_image }} -O | docker load
+      args:
+        warn: no
+      register: icp_load_job
+      async: 1800
+      poll: 0
+      
+    - name: load ICP polling
+      async_status:
+        jid: "{{ icp_load_job.ansible_job_id }}"
+      register: icp_load_polling
+      until: icp_load_polling.finished
+      retries: 60
+      delay: 30
+
+    - name: save ICP load results
+      copy:
+        src: "{{ icp_load_job.results_file }}"
+        dest: "/tmp/icp_load_results.json"
+        remote_src: True
+
+    - name: load ICP load results
+      include_vars:
+        file: "/tmp/icp_load_results.json"
+        name: icp_load_output
+
+    - name: load ICP output
+      debug:
+        msg: "{{ icp_load_output.stdout.split('\n') }}"
+      when: do_verbose

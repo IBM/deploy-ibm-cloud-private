@@ -8,8 +8,15 @@ license_accepted
 cluster/ssh_key
 cluster/ssh_key.pub
 
+playbooks/cluster-vms.json
+playbooks/cluster-vgs.json
 
 # terraform
 .tfstate
 .backup
 .terraform*
+
+# eclipse
+.project
+.pydevproject
+

@@ -1,0 +1,42 @@
+#vm-create-body
+name: "{{ vm.name }}"
+memory_mb: "{{ vm.mem }}"
+num_vcpus: "{{ vm.cpu }}"
+num_cores_per_vcpu: "{{ vm.cpc }}"
+description: "Ansible VM-create instance {{ vm.name }}"
+vm_customization_config:
+  userdata: |
+    #cloud-config
+    hostname: "{{ vm.name }}"
+    password: 'passw0rd'
+    chpasswd: {expire: False}
+    ssh_pwauth: true
+    ssh_authorized_keys:
+      - "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+vm_disks:
+  - is_cdrom: false
+    vm_disk_clone:
+      storage_container_uuid: "{{ nx_images[vm.boot.img].storage_container_uuid }}"
+      minimum_size: "{{ vm.boot.size }}"
+      disk_address:
+        vmdisk_uuid: "{{ nx_images[vm.boot.img].vm_disk_id }}"
+{% if vm.clones is defined %}
+{% for clone in vm.clones %}
+  - is_cdrom: false
+    vm_disk_clone:
+      storage_container_uuid: "{{ nx_images[clone].storage_container_uuid }}"
+      disk_address:
+        vmdisk_uuid: "{{ nx_images[clone].vm_disk_id }}"
+{% endfor %}
+{% endif %}
+{% if vm.disks is defined %}
+{% for disk in vm.disks %}
+  - is_cdrom: false
+    vm_disk_create:
+      storage_container_uuid: "{{ nx_images[vm.boot.img].storage_container_uuid }}"
+      size: "{{ disk }}"
+{% endfor %}
+{% endif %}
+vm_nics:
+  - network_uuid: "{{ nx_nets[vm.net].uuid }}"
+    request_ip: true

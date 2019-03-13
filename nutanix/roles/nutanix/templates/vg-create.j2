@@ -1,0 +1,20 @@
+#vg-create-body
+name: "{{ vg.name }}"
+description: "Ansible VG-create instance {{ vg.name }}"
+is_shared: "{{ vg.shared }}"
+disk_list:
+{% if vg.disks is defined %}
+{% for disk in vg.disks %}
+  - create_config:
+      storage_container_uuid: "{{ nx_containers[vg.container].uuid }}"
+      size: "{{ disk }}"
+{% endfor %}
+{% endif %}
+{% if vg.clones is defined %}
+{% for clone in vg.clones %}
+  - clone_config:
+      disk_address:
+        vmdisk_uuid: "{{ nx_images[clone].vm_disk_id }}"
+      storage_container_uuid: "{{ nx_containers[vg.container].uuid }}"
+{% endfor %}
+{% endif %}

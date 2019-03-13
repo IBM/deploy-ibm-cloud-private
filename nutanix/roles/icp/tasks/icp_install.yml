@@ -1,0 +1,57 @@
+---
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Author: Marcelo Perazolo <mperazol@us.ibm.com>
+#---
+
+    - name: ensure ICP config dir exists
+      file:
+        path: "{{ icp_conf }}/cluster"
+        state: directory
+        mode: 0755
+
+    - name: install ICP
+      shell: >
+        docker run --net=host -t -e LICENSE=accept
+        -v {{ icp_conf }}/cluster:/installer/cluster
+        -v {{ icp_target_image }}:/installer/cluster/images/{{ icp_target_image | basename }}
+        {{ icp_inception }} install
+      args:
+        warn: no
+      register: icp_install_job
+      async: 5400
+      poll: 0
+      
+    - name: install ICP polling
+      async_status:
+        jid: "{{ icp_install_job.ansible_job_id }}"
+      register: icp_install_polling
+      until: icp_install_polling.finished
+      retries: 180
+      delay: 30
+
+    - name: save ICP install results
+      copy:
+        src: "{{ icp_install_job.results_file }}"
+        dest: "/tmp/icp_install_results.json"
+        remote_src: True
+
+    - name: load ICP install results
+      include_vars:
+        file: "/tmp/icp_install_results.json"
+        name: icp_install_output
+
+    - name: install ICP output
+      debug:
+        msg: "{{ icp_install_output.stdout.split('\n') }}"
+      when: do_verbose

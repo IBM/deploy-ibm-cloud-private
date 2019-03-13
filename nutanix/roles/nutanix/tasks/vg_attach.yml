@@ -1,0 +1,64 @@
+---
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Author: Marcelo Perazolo <mperazol@us.ibm.com>
+#---
+
+    - name: attach VGs
+      uri:
+        url: "{{ rest_url }}/volume_groups/{{ my_vgs[attach.vg].uuid }}/attach"
+        validate_certs: "{{ cluster.validate_certs }}"
+        force_basic_auth: yes
+        method: POST
+        status_code: 201
+        user: "{{ cluster.username }}"
+        password: "{{ cluster.password }}"
+        return_content: yes
+        body:
+          uuid: "{{ my_vgs[attach.vg].uuid }}"
+          vm_uuid: "{{ my_vgs[attach.vm].uuid }}"
+        body_format: json
+      register: attach_vgs_output
+      loop: "{{ map_vm_vg }}"
+      loop_control:
+        loop_var: attach
+        label: "{{ attach.vm }}-{{ attach.vg }}"
+
+    - name: attach VGs output
+      debug:
+        var: attach_vgs_output
+      when: do_verbose
+
+    - name: attach VGs task
+      uri:
+        url: "{{ rest_url }}/tasks/{{ result.json.task_uuid }}"
+        validate_certs: "{{ cluster.validate_certs }}"
+        force_basic_auth: yes
+        method: GET
+        status_code: 200
+        user: "{{ cluster.username }}"
+        password: "{{ cluster.password }}"
+        return_content: yes
+      register: attach_vgs_task_output
+      until: attach_vgs_task_output.json.progress_status == "Succeeded"
+      retries: 5
+      delay: 10
+      loop: "{{ attach_vgs_output.results }}"
+      loop_control:
+        loop_var: result
+        label: "{{ result.json.task_uuid }}"
+
+    - name: attach VGs task output
+      debug:
+        var: attach_vgs_task_output
+      when: do_verbose

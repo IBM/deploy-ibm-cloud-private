@@ -1,0 +1,7 @@
+#cloud-config
+hostname: "{{ vm.name }}"
+password: 'passw0rd'
+chpasswd: {expire: False}
+ssh_pwauth: true
+ssh_authorized_keys:
+  - "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"

@@ -1,0 +1,84 @@
+---
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Author: Marcelo Perazolo <mperazol@us.ibm.com>
+#---
+
+# Cluster settings
+clusters:
+  ppc:
+    address: "9.53.168.60"
+    port: 9440
+    validate_certs: False
+    username: "admin"
+    password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          32383939363131306566653937323363663838393962666234623632343936356438386265346664
+          3364353565363037336236353062313038633831653034640a346232393864656638656336613033
+          39616232343834393739373538386365613931343266633333643066626135303935626431373631
+          3034623837616231340a323262623639646131653962316133396536366464343132646163623962
+          6562
+  x86:
+    address: "9.53.168.70"
+    port: 9440
+    validate_certs: False
+    username: "admin"
+    password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          65393833616566353732303765633636366666616331316264656334323131623933376362353936
+          6363376261383339643266616631313166626666643935350a346565653236333737656532323036
+          38343434653933333130396234346265666264303231393136633561633433326535356264653833
+          3231656265643730300a336137356334303130376362383631386233643262366162643535336433
+          3263
+
+# Playbook settings
+do_debug: False
+do_verbose: False
+vms_root_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          39323439353435303266313531336433663035656366333266353662306638333134346235393639
+          6631353639626461336338646330633339366563633161620a303433626364303864633434666162
+          38613166383534663339646236363635663236663265353065383163333566326139623762363464
+          3835343537623065370a326462346539323261366233666436626363396137346134316135343864
+          3865
+
+cluster: "{{ clusters.ppc }}"
+
+vms:
+  - { name: "icp-master-0",
+      type: "master",
+      cpu: 1,
+      cpc: 6,
+      mem: 32768,
+      net: "vlan.0",
+      boot: { img: "rhel-7.5-ppc64le-cloud", size: 322122547200 },
+      body: "vm-create.j2",
+      user: "cloud-user" }
+  - { name: "icp-worker-1",
+      type: "worker",
+      cpu: 1,
+      cpc: 6,
+      mem: 32768,
+      net: "vlan.0",
+      boot: { img: "rhel-7.5-ppc64le-cloud", size: 322122547200 },
+      body: "vm-create.j2",
+      user: "cloud-user" }
+  - { name: "icp-worker-2",
+      type: "worker",
+      cpu: 1,
+      cpc: 6,
+      mem: 32768,
+      net: "vlan.0",
+      boot: { img: "rhel-7.5-ppc64le-cloud", size: 322122547200 },
+      body: "vm-create.j2",
+      user: "cloud-user" }

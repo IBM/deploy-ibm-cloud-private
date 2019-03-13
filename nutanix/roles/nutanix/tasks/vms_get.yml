@@ -1,0 +1,47 @@
+---
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Author: Marcelo Perazolo <mperazol@us.ibm.com>
+#---
+
+    - name: get VMs
+      uri:
+        url: "{{ rest_url }}/vms"
+        validate_certs: "{{ cluster.validate_certs }}"
+        force_basic_auth: yes
+        method: GET
+        status_code: 200
+        user: "{{ cluster.username }}"
+        password: "{{ cluster.password }}"
+        body_format: json
+        return_content: no
+      register: get_vms_output
+
+    - name: get VMs output
+      debug:
+        var: get_vms_output.json.entities
+      when: do_verbose
+
+    - name: save VMs
+      set_fact:
+        nx_vms: "{{ nx_vms | default({}) | combine( { vm.name: { 'uuid': vm.uuid, 'address': vm.vm_nics[0].requested_ip_address, 'mem': memory_mb, 'cpu': vm.num_vcpus, 'cpc': vm.num_cores_per_vcpu } } ) }}"
+      loop: "{{ get_vms_output.json.entities }}"
+      loop_control:
+        loop_var: vm
+        label: "{{ vm.name }}"
+
+    - name: save VMs output
+      debug:
+        msg: "{{ nx_vms }}"
+      when: do_debug
+

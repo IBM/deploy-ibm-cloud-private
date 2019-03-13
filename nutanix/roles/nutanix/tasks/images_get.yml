@@ -1,0 +1,48 @@
+---
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Author: Marcelo Perazolo <mperazol@us.ibm.com>
+#---
+
+    - name: get images
+      uri:
+        url: "{{ rest_url }}/images"
+        validate_certs: "{{ cluster.validate_certs }}"
+        force_basic_auth: yes
+        method: GET
+        status_code: 200
+        user: "{{ cluster.username }}"
+        password: "{{ cluster.password }}"
+        body_format: json
+        return_content: no
+      register: get_images_output
+
+    - name: get images output
+      debug:
+        var: get_images_output.json.entities
+      when: do_verbose
+
+    - name: save images
+      set_fact:
+        nx_images: "{{ nx_images | default({}) | combine( { image.name: { 'uuid': image.uuid, 'vm_disk_id': image.vm_disk_id, 'storage_container_uuid': image.storage_container_uuid } } ) }}"
+      when: image.image_state == 'ACTIVE'
+      loop: "{{ get_images_output.json.entities }}"
+      loop_control:
+        loop_var: image
+        label: "{{ image.name }}"
+
+    - name: save images output
+      debug:
+        msg: "{{ nx_images }}"
+      when: do_debug
+

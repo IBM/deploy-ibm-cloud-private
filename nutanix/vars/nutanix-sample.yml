@@ -1,0 +1,72 @@
+---
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Author: Marcelo Perazolo <mperazol@us.ibm.com>
+#---
+
+# Cluster settings
+clusters:
+  ppc:
+    address: "9.53.168.60"
+    port: 9440
+    validate_certs: False
+    username: "admin"
+    password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          39656633386534643532303236613061306234316437336137663438343036303137366230626538
+          3630373836306338336264393530356639373237666438360a643638653462633136653636613435
+          31313463376236393839336639666636373461646530393231383930306334366665613965643662
+          3763336134326336310a313937653534373535663031343262613631366538323833656365353933
+          6430
+  x86:
+    address: "9.53.168.70"
+    port: 9440
+    validate_certs: False
+    username: "admin"
+    password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          65393833616566353732303765633636366666616331316264656334323131623933376362353936
+          6363376261383339643266616631313166626666643935350a346565653236333737656532323036
+          38343434653933333130396234346265666264303231393136633561633433326535356264653833
+          3231656265643730300a336137356334303130376362383631386233643262366162643535336433
+          3263
+
+# Playbook settings
+nx_verbose: False
+nx_debug: False
+cluster: "{{ clusters.ppc }}"
+
+vms:
+  - { name: "a-vm-0",
+      type: "sample",
+      cpu: 1,
+      cpc: 6,
+      mem: 32768,
+      net: "vlan.0",
+      boot: { img: "rhel-7.5-ppc64le-cloud", size: 128849018880 },
+      disks: [ 128849018880 ],
+      clones: [ "empty_100gb" ],
+      body: "vm-create.j2",
+      user: "cloud-user" }
+
+### warning: replace value of "container" with your Nutanix cluster's default container name
+vgs:
+  - { name: "a-vg-0",
+      shared: "true",
+      container: "default-container-76858036472198",
+      disks: [ 128849018880 ],
+      clones: [ "empty_100gb" ],
+      body: "vg-create.j2" }
+
+map_vm_vg:
+  - { vm: "a-vm-0", vg: "a-vg-0" }
