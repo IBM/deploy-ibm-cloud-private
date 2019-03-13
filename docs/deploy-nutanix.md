@@ -18,7 +18,7 @@ Once you're done take note of the image name and the network name you'd like to 
 
 ### Configure your Nutanix cluster settings
 
-You can find these in the first part of this [file](nutanix/vars/nutanix.yml). It's a best practice to define different clusters to assume different roles, for example, a "prod" cluster that contains the production deployment and a "test" cluster that contains the test deployment. Each of these clusters have key parameters that will need to be configured:
+You can find these in the first part of this [file](../nutanix/vars/nutanix.yml). It's a best practice to define different clusters to assume different roles, for example, a "prod" cluster that contains the production deployment and a "test" cluster that contains the test deployment. Each of these clusters have key parameters that will need to be configured:
 
 | variable | example | description |
 | ------ | ------ | ------ |
@@ -28,7 +28,7 @@ You can find these in the first part of this [file](nutanix/vars/nutanix.yml). I
 | username | admin | A valid user name to interact with the Nutanix cluster |
 | password | passw0rd<sup>*</sup> | The password associated to the Nutanix user |
 
-<sup>*</sup>Obs: It's a best practice to always encrypt any secrets before publishing it in an Ansible yml file. The ansible-vault command can be used for this purpose. To make it easier we provide a sample syntax [here](nutanix/scripts/enc.sh). Use it as:
+<sup>*</sup>Obs: It's a best practice to always encrypt any secrets before publishing it in an Ansible yml file. The ansible-vault command can be used for this purpose. To make it easier we provide a sample syntax [here](../nutanix/scripts/enc.sh). Use it as:
 
 ```sh
 cd nutanix
@@ -38,7 +38,7 @@ And then copy the resullting encrypted string into the proper variable in your y
 
 ### Configure your Nutanix playbook settings
 
-You can find these in the second part of this [file](nutanix/vars/nutanix.yml). Here we define key Nutanix-related variables that will need to be configured:
+You can find these in the second part of this [file](../nutanix/vars/nutanix.yml). Here we define key Nutanix-related variables that will need to be configured:
 
 | variable | example | description |
 | ------ | ------ | ------ |
@@ -46,9 +46,9 @@ You can find these in the second part of this [file](nutanix/vars/nutanix.yml). 
 | do_verbose (optional) | False | Extra verbose debugging, usually for development purposes only |
 | cluster | "{{ clusters.test }}" | Points to a Nutanix cluster to use for deployment (defined on previous section) |
 | vms_root_password | passw0rd<sup>*</sup> | The password to set for the root user in the VMs to be used for ICP installation |
-| vms | see [sample](nutanix/vars/nutanix.yml) | List variable containing multiple Virtual Machine definitions |
-| vgs (optional) | see [sample](nutanix/vars/nutanix-sample.yml) | List variable containing multiple Volume Group definitions |
-| map_vm_vg (optional) | see [sample](nutanix/vars/nutanix-sample.yml) | List variable with entries attaching Volume Groups to Virtual Machines |
+| vms | see [sample](../nutanix/vars/nutanix.yml) | List variable containing multiple Virtual Machine definitions |
+| vgs (optional) | see [sample](../nutanix/vars/nutanix-sample.yml) | List variable containing multiple Volume Group definitions |
+| map_vm_vg (optional) | see [sample](../nutanix/vars/nutanix-sample.yml) | List variable with entries attaching Volume Groups to Virtual Machines |
 
 <sup>*</sup>Obs: See best practices for encryption of secrets as explained in the previous section.
 
@@ -83,7 +83,7 @@ Finally, you can map VGs to VMs by defining a list in the map_vms_vgs variable. 
 
 ### Configure your ICP installation settings
 
-You can find the ICP installation parameters in this [file](nutanix/vars/icp.yml). The following are key variables that will need to be configured for a successful ICP installation:
+You can find the ICP installation parameters in this [file](../nutanix/vars/icp.yml). The following are key variables that will need to be configured for a successful ICP installation:
 
 | variable | example | description |
 | ------ | ------ | ------ |
@@ -103,19 +103,19 @@ Once all these configuration parameters are set you're ready to initiate your de
 
 There are 4 steps necessary for deployment, that have to run in sequence:
 
-  - Nutanix [config](nutanix/nx_config.yml) creates the VMs in the Nutanix cluster
-  - Nutanix [deploy](nutanix/nx_deploy.yml) configures the VMs for deployment
-  - ICP [config](nutanix/icp_config.yml) loads ICP images in the deployer and configures ICP deployment parameters
-  - ICP [deploy](nutanix/icp_deploy.yml) installs ICP on the remote VM nodes
+  - Nutanix [config](../nutanix/nx_config.yml) creates the VMs in the Nutanix cluster
+  - Nutanix [deploy](../nutanix/nx_deploy.yml) configures the VMs for deployment
+  - ICP [config](../nutanix/icp_config.yml) loads ICP images in the deployer and configures ICP deployment parameters
+  - ICP [deploy](../nutanix/icp_deploy.yml) installs ICP on the remote VM nodes
 
 In addition there's 2 teardown steps in case you'd like to clean your environment:
 
   - Nutanix [teardown](nx_teardown.yml) removes all previously created VMs in the Nutanix cluster
   - ICP [teardown](icp_teardown.yml) removes the ICP images and configuration in the deployer
 
-And for convenience there's also an [install](nutanix/nx-icp-install.yml) step that runs all 4 main deployment steps in sequence and a respective [uninstall](nutanix/nx-icp-install.yml) step that runs both teardown steps in sequence.
+And for convenience there's also an [install](../nutanix/nx-icp-install.yml) step that runs all 4 main deployment steps in sequence and a respective [uninstall](../nutanix/nx-icp-install.yml) step that runs both teardown steps in sequence.
 
-If you have encrypted secrets you will need to pass the file containing the vault secret to Ansible when running each of these playbooks. To make it easier we provide a sample syntax [here](nutanix/scripts/run.sh). Use it as:
+If you have encrypted secrets you will need to pass the file containing the vault secret to Ansible when running each of these playbooks. To make it easier we provide a sample syntax [here](../nutanix/scripts/run.sh). Use it as:
 
 ```sh
 cd nutanix
@@ -124,7 +124,7 @@ scripts/run.sh <deployment_step_name>
 
 ### Precaution when using RedHat Enterprise Linux images
 
-To sucessfully use RHEL cloud images users must use the Nutanix [deploy](nutanix/nx_deploy.yml) step to properly set up the RedHat subscription and register repositories for use with yum. If this step is not done the ICP deployment will fail. There are many ways to achieve this. As an example we use a sample role called "rhel" that makes use of certificate variables define [here](nutanix/vars/redhat.yml). With these variables our sample tasks [here](nutanix/roles/rhel/tasks/subscribe.yml) invoke subscription-manager commands to properly register the subscription and sets up repositories for use with yum. If your organization uses an alternate (or legacy) method to set up subscription and repositories please replace these tasks and variables accordingly.
+To sucessfully use RHEL cloud images users must use the Nutanix [deploy](../nutanix/nx_deploy.yml) step to properly set up the RedHat subscription and register repositories for use with yum. If this step is not done the ICP deployment will fail. There are many ways to achieve this. As an example we use a sample role called "rhel" that makes use of certificate variables define [here](../nutanix/vars/redhat.yml). With these variables our sample tasks [here](../nutanix/roles/rhel/tasks/subscribe.yml) invoke subscription-manager commands to properly register the subscription and sets up repositories for use with yum. If your organization uses an alternate (or legacy) method to set up subscription and repositories please replace these tasks and variables accordingly.
 
 ### What to expect during deployment
 
