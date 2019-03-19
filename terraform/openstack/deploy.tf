@@ -32,6 +32,7 @@ locals {
         "ansible_become"            = "true"
         "ansible_become_password"   = "${var.icp_install_user_password}"
         "management_services"       = "${var.icp_management_services}"
+        "cluster_lb_address"        = "${openstack_compute_floatingip_associate_v2.master_pub_ip.0.floating_ip}"
     }
 }
 
@@ -56,6 +57,7 @@ module "icpprovision" {
     ssh_user                = "${var.icp_install_user}"
     ssh_key_base64          = "${base64encode(file(var.openstack_ssh_key_file))}"
     ssh_agent               = "false"
+    bastion_host            = "${openstack_compute_floatingip_associate_v2.master_pub_ip.0.floating_ip}"
 
     image_location = "${var.icp_download_location}"
 
@@ -86,6 +88,7 @@ module "mcm_install" {
     mcm_download_location   = "${var.mcm_download_location}"
     mcm_download_user       = "${var.mcm_download_user}"
     mcm_download_password   = "${var.mcm_download_password}"
+    bastion_host            = "${openstack_compute_floatingip_associate_v2.master_pub_ip.0.floating_ip}"
 }
 
 module "cam_install" {
@@ -107,4 +110,5 @@ module "cam_install" {
     cam_download_user       = "${var.cam_download_user}"
     cam_download_password   = "${var.cam_download_password}"
     cam_product_id          = "${var.cam_product_id}"
+    bastion_host            = "${openstack_compute_floatingip_associate_v2.master_pub_ip.0.floating_ip}"
 }

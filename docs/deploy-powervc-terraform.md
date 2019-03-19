@@ -2,10 +2,11 @@ Summary
 =======
 This Terraform module will perform a simple IBM Cloud Private (ICP) deployment. By default, it will install the Community Edition, but you can also configure it to install the Enterprise Edition as well. It is currently setup to deploy an ICP master node (also serves as the boot, proxy, and management node) and a user-configurable number of ICP worker nodes. This module serves as a simple way to provision an ICP cluster within your infrastructure.
 
+For provisioning on OpenStack environment please look at [Deploy in Openstack using Terraform](deploy-openstack-terraform.md)
 
 Pre-requisites
 ------------
-* Get access to an OpenStack (or PowerVC) server instance.
+* Get access to a PowerVC server instance.
 * If the default SSH user is not the root user, the default user must have password-less sudo access.
 * Install [Terraform](https://www.terraform.io/downloads.html) on your workstation.
 * Refer to ICP documentation for installation pre-requisites. https://www.ibm.com/support/knowledgecenter/en/SSBS6K/product_welcome_cloud_private.html
@@ -13,6 +14,7 @@ Pre-requisites
 Supported OS versions
 ------------
 This Terraform deployment supports the following OS images on different platforms. Check ICP documentation for supported system configurations.
+
     * Ubuntu 18.04 LTS and 16.04 LTS
     * Red Hat Enterprise Linux (RHEL) 7.4, 7.5, and 7.6
     * SUSE Linux Enterprise Server (SLES) 12 SP3
@@ -24,20 +26,22 @@ Ensure that the base image used for deployment have necessary repositories confi
 * moreutils
 * container-selinux
 * socat
+* nfs-kernel-server (nfs-utils for RHEL)
 
 Instructions
 ------------
 1. Login to your Terraform workstation.
 2. Clone this repository. (git clone git@github.com:IBM/deploy-ibm-cloud-private.git)
-3. Generate an SSH key pair. This will be referenced in Inputs below. (ssh-keygen -t rsa)
-4. Edit the contents of variables.tf to align with your OpenStack (or PowerVC) deployment. (see Inputs section below)
-5. Run terraform init to initialize and download the terraform modules needed for deployment.
-6. Run [terraform apply] to start the ICP deployment to the OpenStack server.
-7. Wait about 30-40 minutes, you should be able to access your ICP cluster at https://<ICP_MASTER_IP_ADDRESS>:8443
+3. Run `cd deploy-ibm-cloud-private/terraform/powervc/` to change the directory.
+4. Run `ssh-keygen -t rsa` to generate an SSH key pair. This will be referenced in [Inputs](#inputs) below.
+5. Pass the [Input](#inputs) variables to align with your OpenStack (or PowerVC) deployment. (see [How To](#how-to) section below)
+6. Run `terraform init` to initialize and download the terraform modules needed for deployment.
+7. Run `terraform apply` to start the ICP deployment to the OpenStack server.
+8. Wait for about 30-40 minutes. You should be able to access your ICP cluster at https://<ICP_MASTER_IP_ADDRESS>:8443
 
-See [Accessing IBM Cloud](https://github.com/yussufsh/deploy-ibm-cloud-private/blob/hdcw/README.md#accessing-ibm-cloud-private) Private for next steps.
+See [Accessing IBM Cloud Private](/README.md#accessing-ibm-cloud-private) for next steps.
 
-Inputs
+[Inputs](#inputs)
 ------------
 **Configure the OpenStack Provider**
 
@@ -105,17 +109,20 @@ Will enable if *cam_docker_user* is provided for *Online Installation* OR *cam_d
 |--------------------|---------------|--------|----------------------------------------|
 |smt_value_master||string|Number of threads per core. Value can be any of: on, off, 1, 2, 4, 8|
 
-Additional Information
+[How-To](#how-to)
 ------------
-* There are multiple ways to pass input variables to Terraform module. See [docs](https://www.terraform.io/docs/configuration/variables.html#assigning-values-to-root-module-variables) for more information.
-* You can re-install MCM from the cluster using below commands.
+* **Pass the variables**: There are multiple ways to pass input variables to Terraform module. See [docs](https://www.terraform.io/docs/configuration/variables.html#assigning-values-to-root-module-variables) for more information.
+* **Re-install MCM on the cluster**:
 <br/>`terraform destroy -target=null_resource.mcm_install`
 <br/>`terraform apply`
-* You can re-install CAM from the cluster using below commands.
+* **Re-install CAM on the cluster**:
 <br/>`terraform destroy -target=null_resource.cam_install`
 <br/>`terraform apply`
+* **Destroy the cluster without waiting to uninstall MCM & CAM**:
+<br/>`terraform taint -module=mcm_install null_resource.mcm_install`
+<br/>`terraform taint -module=cam_install null_resource.cam_install`
+<br/>`terraform destroy`
 
-
-Authors
+[Authors](#authors)
 ------------
 Yussuf Shaikh yussuf@us.ibm.com

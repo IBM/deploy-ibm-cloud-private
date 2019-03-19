@@ -42,12 +42,6 @@ resource "null_resource" "mcm_install" {
         bastion_host  = "${var.bastion_host}"
     }
 
-    provisioner "remote-exec" {
-        when = "destroy"
-        inline = [
-          "echo destroy"
-        ]
-    }
     provisioner "file" {
         source = "${path.module}/scripts/mcm_install.sh"
         destination = "/tmp/mcm_install.sh"
