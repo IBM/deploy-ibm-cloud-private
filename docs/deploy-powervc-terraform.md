@@ -59,8 +59,11 @@ See [Accessing IBM Cloud Private](/README.md#accessing-ibm-cloud-private) for ne
 |--------------------|---------------|--------|----------------------------------------|
 |instance_prefix|icp|string|Prefix to use in instance names|
 |openstack_image_id|my_image_id|string|The ID of the image to be used for deploy operations|
-|openstack_flavor_id_master_node|my_flavor_id|string|The ID of the flavor to be used for ICP master node deploy operations|
-|openstack_flavor_id_worker_node|my_flavor_id|string|The ID of the flavor to be used for ICP worker node deploy operations|
+|openstack_master_node|{"flavor_id" = "large"}|map|Map of flavor ID to be used for ICP master node deploy operations|
+|openstack_worker_node|{<br/> "count" = "1"<br/>"flavor_id" = "large"<br/>}|map|Map of count and flavor ID to be used for ICP worker node deploy operations|
+|openstack_management_node|{<br/> "count" = "0"<br/>"flavor_id" = "large"<br/>}|map|Map of count and flavor ID to be used for ICP management node deploy operations|
+|openstack_proxy_node|{<br/> "count" = "0"<br/>"flavor_id" = "large"<br/>}|map|Map of count and flavor ID to be used for ICP proxy node deploy operations|
+|openstack_va_node|{<br/> "count" = "0"<br/>"flavor_id" = "large"<br/>}|map|Map of count and flavor ID to be used for ICP va node deploy operations|
 |openstack_network_name|my_network_name|string|The name of the network to be used for deploy operations|
 |openstack_ssh_key_file|<path to the private SSH key file>|string|The path to the private SSH key file. Appending '.pub' indicates the public key filename|
 
@@ -71,23 +74,28 @@ See [Accessing IBM Cloud Private](/README.md#accessing-ibm-cloud-private) for ne
 |--------------------|---------------|--------|----------------------------------------|
 |icp_install_user|ubuntu|string|The user with sudo access across nodes (users section of cloud-init)|
 |icp_install_user_password||string|Password for sudo access (leave empty if using passwordless sudo access)|
-|icp_num_workers|1|string|The number of ICP worker nodes to provision|
 |icp_version|3.1.2|string|ICP version number|
 |icp_architecture|ppc64le|string|x86 or ppc64le|
 |icp_download_location||string|HTTP wget location for ICP Enterprise Edition - ignored for community edition|
 |icp_default_admin_password|S3cure-icp-admin-passw0rd-default|string|Password to use for default admin user|
 |icp_management_services|{<br/>"istio" = "disabled"<br/> "metering" = "enabled"<br/>}|map|Map of management services to enable/disable in icp config.yaml|
+|icp_configuration|{}|map|Map of configuration values for ICP|
 |docker_download_location||string|HTTP wget location for ICP provided Docker package|
 
 **Configure MCM details**
 This is an optional component to install on top of ICP.
-Will enable if *mcm_download_location* is provided in input variables.
+Will enable only if *mcm_download_location* is provided in input variables.
 
 | Name | Default | Type | Description |
 |--------------------|---------------|--------|----------------------------------------|
 |mcm_download_location||string|HTTP wget location for MCM tarball|
 |mcm_download_user|-|string|Optional username if authentication required for MCM tarball|
 |mcm_download_password|-|string|Optional password if authentication required for MCM tarball|
+|mcm_klusterlet_only|false|string|true if need to install Klusterlet without the Hub cluster(remote)|
+|mcm_klusterlet_name|mykluster|string|Name of the Klusterlet. Should be unique to each cluster|
+|mcm_namespace|mcm|string|Namespace (unique) on Klusterlet or Hub cluster depending on mcm_klusterlet_only flag|
+|mcm_hub_server_url||string|If mcm_klusterlet_only is true then Hub cluster URL|
+|mcm_hub_server_token||string|If mcm_klusterlet_only is true then Hub cluster Token|
 
 **Configure CAM common details**
 This is an optional component to install on top of ICP.
