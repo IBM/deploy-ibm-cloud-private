@@ -18,6 +18,8 @@
 # Copyright (C) 2019 IBM Corporation
 #
 # Yussuf Shaikh <yussuf@us.ibm.com> - Initial implementation.
+# Yussuf Shaikh <yussuf@us.ibm.com> - Added Management, Proxy, VA nodes.
+# Yussuf Shaikh <yussuf@us.ibm.com> - Allow Klusterlet only install.
 #
 ################################################################
 
@@ -42,13 +44,17 @@ locals {
 module "icpprovision" {
     source                  = "github.com/ibm-cloud-architecture/terraform-module-icp-deploy?ref=3.0.8"
 
-    icp-master              = ["${openstack_compute_instance_v2.icp_master_vm.network.0.fixed_ip_v4}"]
-    icp-worker              = ["${openstack_compute_instance_v2.icp_worker_vm.*.network.0.fixed_ip_v4}"]
-    icp-proxy               = ["${openstack_compute_instance_v2.icp_master_vm.network.0.fixed_ip_v4}"]
+    icp-host-groups = {
+        master      = "${openstack_compute_instance_v2.icp_master_vm.*.network.0.fixed_ip_v4}"
+        management  = "${split(" ", var.openstack_management_node["count"] == "0" ? join(" ", openstack_compute_instance_v2.icp_master_vm.*.network.0.fixed_ip_v4) : join(" ", openstack_compute_instance_v2.icp_management_vm.*.network.0.fixed_ip_v4))}"
+        worker      = "${split(" ", var.openstack_worker_node["count"] == "0" ? join(" ", openstack_compute_instance_v2.icp_master_vm.*.network.0.fixed_ip_v4) : join(" ", openstack_compute_instance_v2.icp_worker_vm.*.network.0.fixed_ip_v4))}"
+        proxy       = "${split(" ", var.openstack_proxy_node["count"] == "0" ? join(" ", openstack_compute_instance_v2.icp_master_vm.*.network.0.fixed_ip_v4) : join(" ", openstack_compute_instance_v2.icp_proxy_vm.*.network.0.fixed_ip_v4))}"
+        va          = "${split(" ", var.openstack_va_node["count"] == "0" ? join(" ", openstack_compute_instance_v2.icp_master_vm.*.network.0.fixed_ip_v4) : join(" ", openstack_compute_instance_v2.icp_va_vm.*.network.0.fixed_ip_v4))}"
+    }
+    boot-node = "${openstack_compute_instance_v2.icp_master_vm.0.network.0.fixed_ip_v4}"
+    cluster_size            = "${openstack_compute_instance_v2.icp_master_vm.count + var.openstack_worker_node["count"] + var.openstack_management_node["count"] + var.openstack_proxy_node["count"] + var.openstack_va_node["count"]}"
 
-    cluster_size            = "${openstack_compute_instance_v2.icp_master_vm.count + openstack_compute_instance_v2.icp_worker_vm.count}"
-
-    icp_configuration       = "${local.config}"
+    icp_configuration       = "${merge(local.config, var.icp_configuration)}"
 
     icp-inception           = "${var.icp_version}"
     generate_key            = "false"
@@ -79,12 +85,13 @@ module "mcm_install" {
     ssh_agent               = "false"
     icp_master              = "${openstack_compute_instance_v2.icp_master_vm.network.0.fixed_ip_v4}"
     icp_version             = "${var.icp_version}"
-    cluster_name            = "mycluster"
     icp_admin_user          = "admin"
     icp_admin_user_password = "${module.icpprovision.default_admin_password}"
-    mcm_secret              = "secret"
-    mcm_namespace           = "mcm"
-    mcm_cluster_namespace   = "cmcm"
+    klusterlet_only         = "${var.mcm_klusterlet_only}"
+    klusterlet_name         = "${var.mcm_klusterlet_name}"
+    namespace               = "${var.mcm_namespace}"
+    server_url              = "${var.mcm_hub_server_url}"
+    server_token            = "${var.mcm_hub_server_token}"
     mcm_download_location   = "${var.mcm_download_location}"
     mcm_download_user       = "${var.mcm_download_user}"
     mcm_download_password   = "${var.mcm_download_password}"

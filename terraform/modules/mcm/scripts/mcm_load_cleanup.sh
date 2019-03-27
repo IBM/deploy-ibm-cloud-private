@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ################################################################
 # Module to deploy IBM Cloud Private
 #
@@ -21,70 +23,27 @@
 #
 ################################################################
 
-variable "icp_status" {
-    default = ""
+# Set HOME env var, populate systemArch, helm init and cloudctl login
+function clean_mcm_load {
+    export HOME=~
+    cd $HOME
+    export HELM_HOME=~/.helm
+
+    helm init --client-only
+    cloudctl login -a https://${HUB_CLUSTER_IP}:8443 --skip-ssl-validation \
+        -u ${icp_admin_user} -p ${icp_admin_user_password} -n kube-system
+
+    cloudctl catalog delete-chart --name ibm-mcm-prod
+    cloudctl catalog delete-chart --name ibm-mcmk-prod
 }
 
-variable "icp_master" {
-    default = ""
-}
 
-variable "ssh_user" {
-    default = "root"
-}
+HUB_CLUSTER_IP=$1
+icp_admin_user=$2
+icp_admin_user_password=$3
 
-variable "ssh_key_base64" {
-    default = ""
-}
+/bin/echo
+/bin/echo "Cleaning MCM Load.."
 
-variable "ssh_agent" {
-    default = "false"
-}
-
-variable "bastion_host" {
-    default = ""
-}
-
-variable "cam_version" {
-    default = ""
-}
-
-variable "cluster_name" {
-    default = ""
-}
-
-variable "icp_admin_user" {
-    default = ""
-}
-
-variable "icp_admin_user_password" {
-    default = ""
-}
-
-variable "cam_docker_user" {
-    default = ""
-}
-
-variable "cam_docker_password" {
-    default = ""
-}
-
-variable "cam_docker_secret" {
-    default = ""
-}
-
-variable "cam_download_location" {
-    default = ""
-}
-
-variable "cam_download_user" {
-    default = "-"
-}
-
-variable "cam_download_password" {
-    default = "-"
-}
-
-variable "cam_product_id" {
-    default = ""
-}
+clean_mcm_load
+/bin/echo "MCM Load cleaning completed"

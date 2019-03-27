@@ -21,7 +21,7 @@
 #
 ################################################################
 
-output "icp_master_vm-_pub_ip" {
+output "icp_master_vm_pub_ip" {
     value = "${openstack_compute_floatingip_associate_v2.master_pub_ip.0.floating_ip}"
 }
 

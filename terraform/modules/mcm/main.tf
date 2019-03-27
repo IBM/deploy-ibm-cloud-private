@@ -18,6 +18,7 @@
 # Copyright (C) 2019 IBM Corporation
 #
 # Yussuf Shaikh <yussuf@us.ibm.com> - Initial implementation.
+# Yussuf Shaikh <yussuf@us.ibm.com> - Seperated loading charts and install.
 #
 ################################################################
 
@@ -32,7 +33,7 @@ resource "null_resource" "mcm_install_wait" {
 
 resource "null_resource" "mcm_install" {
     count   = "${var.mcm_download_location == "" ? 0 : 1}"
-    depends_on = ["null_resource.mcm_install_wait"]
+    depends_on = ["null_resource.mcm_load"]
 
     connection {
         host          = "${var.icp_master}"
@@ -56,7 +57,7 @@ resource "null_resource" "mcm_install" {
     provisioner "remote-exec" {
         inline = [
           "chmod 755 /tmp/mcm_install.sh",
-          "bash -c '/tmp/mcm_install.sh ${var.icp_master} ${var.icp_version} ${var.cluster_name} ${var.icp_admin_user} ${var.icp_admin_user_password} ${var.mcm_secret} ${var.mcm_namespace} ${var.mcm_cluster_namespace} ${var.mcm_download_location} ${var.mcm_download_user} ${var.mcm_download_password}'"
+          "bash -c '/tmp/mcm_install.sh ${var.icp_master} ${var.icp_version} ${var.icp_admin_user} ${var.icp_admin_user_password} ${var.klusterlet_only} ${var.klusterlet_name} ${var.namespace} ${var.server_url} ${var.server_token}'"
         ]
     }
 
@@ -64,7 +65,46 @@ resource "null_resource" "mcm_install" {
         when = "destroy"
         inline = [
           "chmod 755 /tmp/mcm_cleanup.sh",
-          "bash -c '/tmp/mcm_cleanup.sh ${var.icp_master} ${var.icp_admin_user} ${var.icp_admin_user_password} ${var.mcm_secret} ${var.mcm_namespace} ${var.mcm_cluster_namespace}'"
+          "bash -c '/tmp/mcm_cleanup.sh ${var.icp_master} ${var.icp_admin_user} ${var.icp_admin_user_password} ${var.namespace}'"
+        ]
+    }
+}
+
+resource "null_resource" "mcm_load" {
+    count   = "${var.mcm_download_location == "" ? 0 : 1}"
+    depends_on = ["null_resource.mcm_install_wait"]
+
+    connection {
+        host          = "${var.icp_master}"
+        user          = "${var.ssh_user}"
+        private_key   = "${base64decode(var.ssh_key_base64)}"
+        agent         = "${var.ssh_agent}"
+        bastion_host  = "${var.bastion_host}"
+    }
+
+    provisioner "file" {
+        source = "${path.module}/scripts/mcm_load.sh"
+        destination = "/tmp/mcm_load.sh"
+    }
+
+    provisioner "file" {
+        when = "destroy"
+        source = "${path.module}/scripts/mcm_load_cleanup.sh"
+        destination = "/tmp/mcm_load_cleanup.sh"
+    }
+
+    provisioner "remote-exec" {
+        inline = [
+          "chmod 755 /tmp/mcm_load.sh",
+          "bash -c '/tmp/mcm_load.sh ${var.icp_master} ${var.icp_version} ${var.icp_admin_user} ${var.icp_admin_user_password} ${var.mcm_download_location} ${var.mcm_download_user} ${var.mcm_download_password}'",
+        ]
+    }
+
+    provisioner "remote-exec" {
+        when = "destroy"
+        inline = [
+          "chmod 755 /tmp/mcm_load_cleanup.sh",
+          "bash -c '/tmp/mcm_load_cleanup.sh ${var.icp_master} ${var.icp_admin_user} ${var.icp_admin_user_password}'"
         ]
     }
 }

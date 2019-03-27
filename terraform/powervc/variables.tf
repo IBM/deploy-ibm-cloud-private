@@ -18,6 +18,9 @@
 # Copyright (C) 2019 IBM Corporation
 #
 # Yussuf Shaikh <yussuf@us.ibm.com> - Initial implementation.
+# Yussuf Shaikh <yussuf@us.ibm.com> - Added Management, Proxy, VA nodes.
+# Yussuf Shaikh <yussuf@us.ibm.com> - Added icp_configuration map variable.
+# Yussuf Shaikh <yussuf@us.ibm.com> - Allow Klusterlet only install.
 #
 ################################################################
 
@@ -63,14 +66,48 @@ variable "openstack_image_id" {
     default = "my_image_id"
 }
 
-variable "openstack_flavor_id_master_node" {
-    description = "The ID of the flavor to be used for ICP master node deploy operations"
-    default = "my_flavor_id"
+variable "openstack_master_node" {
+    type        = "map"
+    description = "Map of flavor ID to be used for ICP master node deploy operations"
+    default = {
+        "flavor_id" = "large"
+    }
 }
 
-variable "openstack_flavor_id_worker_node" {
-    description = "The ID of the flavor to be used for ICP worker node deploy operations"
-    default = "my_flavor_id"
+variable "openstack_worker_node" {
+    type        = "map"
+    description = "Map of count and flavor ID to be used for ICP worker node deploy operations"
+    default = {
+        "count" = "1"
+        "flavor_id" = "large"
+    }
+}
+
+variable "openstack_management_node" {
+    type        = "map"
+    description = "Map of count and flavor ID to be used for ICP management node deploy operations"
+    default = {
+        "count" = "0"
+        "flavor_id" = "large"
+    }
+}
+
+variable "openstack_proxy_node" {
+    type        = "map"
+    description = "Map of count and flavor ID to be used for ICP proxy node deploy operations"
+    default = {
+        "count" = "0"
+        "flavor_id" = "large"
+    }
+}
+
+variable "openstack_va_node" {
+    type        = "map"
+    description = "Map of count and flavor ID to be used for ICP va node deploy operations"
+    default = {
+        "count" = "0"
+        "flavor_id" = "large"
+    }
 }
 
 variable "openstack_network_name" {
@@ -95,11 +132,6 @@ variable "icp_install_user" {
 variable "icp_install_user_password" {
    description = "Password for sudo access (leave empty if using passwordless sudo access)"
    default = ""
-}
-
-variable "icp_num_workers" {
-    description = "The number of ICP worker nodes to provision"
-    default = 1
 }
 
 variable "icp_version" {
@@ -131,6 +163,12 @@ variable "icp_management_services" {
     }
 }
 
+variable "icp_configuration" {
+    type        = "map"
+    description = "Map of configuration values for ICP"
+    default = {}
+}
+
 variable "docker_download_location" {
     description = "HTTP wget location for ICP provided Docker package"
     default = ""
@@ -153,6 +191,31 @@ variable "mcm_download_user" {
 variable "mcm_download_password" {
     description = "Optional password if authentication required for MCM tarball"
     default = "-"
+}
+
+variable "mcm_klusterlet_only" {
+    description = "true if need to install Klusterlet without the Hub cluster(remote)"
+    default = "false"
+}
+
+variable "mcm_klusterlet_name" {
+    description = "Optional name of the Klusterlet."
+    default = "mykluster"
+}
+
+variable "mcm_namespace" {
+    description = "Namespace on Klusterlet (unique) if mcm_klusterlet_only is true. Namespace on the Hub cluster if mcm_klusterlet_only is false"
+    default = "mcm"
+}
+
+variable "mcm_hub_server_url" {
+    description = "If mcm_klusterlet_only is true then Hub cluster URL"
+    default = ""
+}
+
+variable "mcm_hub_server_token" {
+    description = "If mcm_klusterlet_only is true then Hub cluster Token"
+    default = ""
 }
 
 
@@ -199,6 +262,7 @@ variable "cam_download_password" {
     description = "Optional password if authentication required for CAM tarball"
     default = "-"
 }
+
 
 ################################################################
 # Configure SMT level for master node

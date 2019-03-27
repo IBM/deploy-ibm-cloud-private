@@ -148,7 +148,6 @@ function install_cam {
 }
 
 
-/bin/echo "/tmp/cam_install.sh " $*
 METHOD=$1
 HUB_CLUSTER_IP=$2
 VERSION=$3

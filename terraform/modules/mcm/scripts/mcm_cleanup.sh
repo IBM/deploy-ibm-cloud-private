@@ -20,6 +20,7 @@
 # Copyright (C) 2019 IBM Corporation
 #
 # Yussuf Shaikh <yussuf@us.ibm.com> - Initial implementation.
+# Yussuf Shaikh <yussuf@us.ibm.com> - Seperated loading charts and install.
 #
 ################################################################
 
@@ -30,32 +31,28 @@ function clean_mcm {
     export HELM_HOME=~/.helm
 
     helm init --client-only
-    cloudctl login -a https://${HUB_CLUSTER_IP}:8443 \
-        --skip-ssl-validation -u ${icp_admin_user} -p ${icp_admin_user_password} -n kube-system
+    cloudctl login -a https://${HUB_CLUSTER_IP}:8443 --skip-ssl-validation \
+        -u ${icp_admin_user} -p ${icp_admin_user_password} -n kube-system
 
     export MCM_HELM_RELEASE_NAME=mcm-release
     helm del --purge ${MCM_HELM_RELEASE_NAME} --timeout 1800 --tls
-    kubectl delete pod --grace-period=0 --force --namespace kube-system -l release=${MCM_HELM_RELEASE_NAME}
+    kubectl delete pod --grace-period=0 --force --namespace kube-system \
+        -l release=${MCM_HELM_RELEASE_NAME}
 
     export MCMK_HELM_RELEASE_NAME=mcmk-release
     helm del --purge ${MCMK_HELM_RELEASE_NAME} --timeout 1800 --tls
-    kubectl delete pod --grace-period=0 --force --namespace kube-system -l release=${MCMK_HELM_RELEASE_NAME}
+    kubectl delete pod --grace-period=0 --force --namespace kube-system \
+        -l release=${MCMK_HELM_RELEASE_NAME}
 
-    cloudctl catalog delete-chart --name ibm-mcm-prod
-    cloudctl catalog delete-chart --name ibm-mcmk-prod
-
-    kubectl delete secret ${helm_secret} -n kube-system
     kubectl delete namespace ${mcm_namespace}
-    kubectl delete namespace ${mcm_cluster_namespace}
+    kubectl delete namespace ${mcm_namespace}k
 }
 
 
 HUB_CLUSTER_IP=$1
 icp_admin_user=$2
 icp_admin_user_password=$3
-helm_secret=$4
-mcm_namespace=$5
-mcm_cluster_namespace=$6
+mcm_namespace=$4
 
 /bin/echo
 /bin/echo "Cleaning MCM.."
