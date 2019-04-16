@@ -41,7 +41,7 @@ locals {
 ## Call the ICP Deployment module
 ################################################################
 module "icpprovision" {
-    source                  = "github.com/ibm-cloud-architecture/terraform-module-icp-deploy?ref=3.0.8"
+    source                  = "github.com/ibm-cloud-architecture/terraform-module-icp-deploy?ref=3.1.1"
 
     icp-host-groups = {
         master      = "${openstack_compute_instance_v2.icp_master_vm.*.network.0.fixed_ip_v4}"

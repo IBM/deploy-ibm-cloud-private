@@ -139,11 +139,6 @@ variable "icp_version" {
     default = "3.1.2"
 }
 
-variable "icp_architecture" {
-    description = "x86 or ppc64le"
-    default = "ppc64le"
-}
-
 variable "icp_download_location" {
     description = "HTTP wget location for ICP Enterprise Edition - ignored for community edition"
     default = ""

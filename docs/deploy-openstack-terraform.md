@@ -77,7 +77,6 @@ See [Accessing IBM Cloud Private](/README.md#accessing-ibm-cloud-private) for ne
 |icp_install_user|ubuntu|string|The user with sudo access across nodes (users section of cloud-init)|
 |icp_install_user_password||string|Password for sudo access (leave empty if using passwordless sudo access)|
 |icp_version|3.1.2|string|ICP version number|
-|icp_architecture|ppc64le|string|x86 or ppc64le|
 |icp_download_location||string|HTTP wget location for ICP Enterprise Edition - ignored for community edition|
 |icp_default_admin_password|S3cure-icp-admin-passw0rd-default|string|Password to use for default admin user|
 |icp_management_services|{<br/>"istio" = "disabled"<br/> "metering" = "enabled"<br/>}|map|Map of management services to enable/disable in icp config.yaml|

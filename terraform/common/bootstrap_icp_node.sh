@@ -20,11 +20,12 @@
 # Copyright (C) 2019 IBM Corporation
 #
 # Yussuf Shaikh <yussuf@us.ibm.com> - Initial implementation.
+# Yussuf Shaikh <yussuf@us.ibm.com> - Common file for PowerVC & Openstack bootstrap.
 #
 ################################################################
 
 # Allow SMT levels to be set for the master node
-if [ "${icp_architecture}" == "ppc64le" ] && [ ! -z "${smt_value_master}" ] && [ -f /usr/sbin/ppc64_cpu ]; then
+if [ ! -z "${smt_value_master}" ] && [ -f /usr/sbin/ppc64_cpu ]; then
     /usr/sbin/ppc64_cpu --smt=${smt_value_master}
     cat >> /etc/systemd/system/smt.service <<EOL
 [Unit]
@@ -47,6 +48,11 @@ fi
 /sbin/sysctl -w vm.max_map_count=262144
 /bin/echo "vm.max_map_count=262144" | /usr/bin/tee -a /etc/sysctl.conf
 
+/bin/sed -i "/^manage_etc_hosts/d" /etc/cloud/cloud.cfg
+/bin/echo "manage_etc_hosts: false" | /usr/bin/tee -a /etc/cloud/cloud.cfg
+
+
+# Pre-install Docker
 if [ -f /etc/redhat-release ]; then
     # Disable the firewall
     systemctl stop firewalld
