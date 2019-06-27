@@ -58,7 +58,7 @@
 
     - name: replace ICP config with template
       template:
-        src: "icp_config.j2"
+        src: "icp_config_{{ icp_version }}.j2"
         dest: "{{ icp_conf }}/cluster/config.yaml"
         mode: 0644
 

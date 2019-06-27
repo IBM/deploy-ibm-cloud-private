@@ -14,6 +14,12 @@
 # Author: Marcelo Perazolo <mperazol@us.ibm.com>
 #---
 
+###
+#
+# OS-independent tasks
+#
+###
+
     - name: set hostname
       hostname:
         name: "{{ inventory_hostname }}"
@@ -63,15 +69,26 @@
 #
 ###
 
-    - name: include os dependent variables
+    - name: include OS-dependent variables
       include_vars: "{{ item }}"
       with_first_found:
         - "{{ ansible_os_family | lower }}.yml"
 
-    - name: rhel setup
+    - name: debian setup
       include_role:
-        name: rhel
+        name: debian
+      when: ansible_os_family == "Debian"
+
+    - name: redhat setup
+      include_role:
+        name: redhat
       when: ansible_os_family == "RedHat"
+
+###
+#
+# Required packages
+#
+###
 
     - name: install packages
       package:
@@ -85,4 +102,3 @@
       loop_control:
         loop_var: package
         label: "{{ package }}"
-      

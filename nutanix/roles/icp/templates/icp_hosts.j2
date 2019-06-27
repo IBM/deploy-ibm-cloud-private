@@ -21,14 +21,14 @@
 
 [management]
 {% for key, value in my_vms.items() %}
-{% if value.type == 'management' %}
+{% if value.type == 'master' %}
 {{ value.address }} ansible_user="root" ansible_ssh_common_args="-oPubkeyAuthentication=yes" ansible_port="22"
 {% endif %}
 {% endfor %}
 
 [va]
 {% for key, value in my_vms.items() %}
-{% if value.type == 'va' %}
+{% if value.type == 'master' %}
 {{ value.address }} ansible_user="root" ansible_ssh_common_args="-oPubkeyAuthentication=yes" ansible_port="22"
 {% endif %}
 {% endfor %}

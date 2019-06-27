@@ -1,0 +1,675 @@
+---
+###
+#
+# {{ ansible_managed }}
+#
+# WARNING:
+#   Some comments are encased by Jinja2 raw-endraw blocks to avoid expansion of comment content.
+#   Don't remove raw-endraw blocks unless you want Jinja2 to expand valid playbook variables.
+#
+###
+
+# Licensed Materials - Property of IBM
+# IBM Cloud private
+# @ Copyright IBM Corp. 2019 All Rights Reserved
+# US Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+
+## Network Settings
+network_type: calico
+# network_helm_chart_path: < helm chart path >
+
+## Network ip version
+network_ip_version: ipv4
+
+# Default IPv4 CIDR is 10.1.0.0/16
+# Default IPv6 CIDR is fd03::0/112
+# network_cidr:
+
+## Kubernetes Settings
+# Default IPv4 Service Cluster Range is 10.0.0.0/16
+# Default IPv6 Service Cluster Range is fd02::0/112
+# service_cluster_ip_range:
+
+{% raw %}
+# cluster_domain: cluster.local
+# cluster_name: mycluster
+# cluster_CA_domain: "{{ cluster_name }}.icp"
+{% endraw %}
+
+## Etcd Settings
+etcd_extra_args: ["--grpc-keepalive-timeout=0", "--grpc-keepalive-interval=0", "--snapshot-count=10000"]
+# Keep the log data separate from the etcd data.
+# You could set etcd wal dirctory to a centralized and remote log directory for persistent logging.
+# etcd_data_dir: "/var/lib/etcd"
+# etcd_wal_dir: "/var/lib/etcd-wal"
+
+## General Settings
+# wait_for_timeout: 600
+# upload_chart_enabled: true
+fips_enabled: false
+
+## Advanced Settings
+password_rules:
+  - '(.*)'
+default_admin_user: admin
+default_admin_password: admin
+# ansible_user: <username>
+# ansible_become: true
+# ansible_become_password: <password>
+
+## Kubernetes Settings
+# kubelet_extra_args: [""]
+# kube_apiserver_extra_args: []
+# kube_controller_manager_extra_args: []
+# kube_proxy_extra_args: []
+# kube_scheduler_extra_args: []
+
+## Bootstrap token
+# bootstrap_token_ttl: "24h0m0s"
+
+
+## Enable Kubernetes Audit Log
+# auditlog_enabled: false
+
+## Audit logging settings
+journal_path: /run/log/journal
+
+## Cluster Router settings
+# router_http_port: 8080
+# router_https_port: 8443
+
+## Nginx Ingress settings
+# ingress_http_port: 80
+# ingress_https_port: 443
+
+## GlusterFS Storage Settings
+# storage-glusterfs:
+#  nodes:
+#    - ip: <storage_node_m_IP_address>
+#      devices:
+#        - <link path>/<symlink of device aaa>
+#        - <link path>/<symlink of device bbb>
+#    - ip: <storage_node_n_IP_address>
+#      devices:
+#        - <link path>/<symlink of device ccc>
+#    - ip: <storage_node_o_IP_address>
+#      devices:
+#        - <link path>/<symlink of device ddd>
+#  storageClass:
+#    create: true
+#    name: glusterfs
+#    isDefault: false
+#    volumeType: replicate:3
+#    reclaimPolicy: Delete
+#    volumeBindingMode: Immediate
+#    volumeNamePrefix: icp
+#    additionalProvisionerParams: {}
+#    allowVolumeExpansion: true
+#  gluster:
+#    resources:
+#      requests:
+#        cpu: 500m
+#        memory: 512Mi
+#      limits:
+#        cpu: 1000m
+#        memory: 1Gi
+#  heketi:
+#    backupDbSecret: heketi-db-backup
+#    authSecret: heketi-secret
+#    maxInFlightOperations: 20
+#    tls:
+#      generate: true
+#      issuer: "icp-ca-issuer"
+#      issuerKind: "ClusterIssuer"
+#      secretName: ""
+#    resources:
+#      requests:
+#        cpu: 500m
+#        memory: 512Mi
+#      limits:
+#        cpu: 1000m
+#        memory: 1Gi
+#  nodeSelector:
+#    key: hostgroup
+#    value: glusterfs
+#  prometheus:
+#    enabled: true
+#    path: "/metrics"
+#    port: 8080
+#  tolerations: []
+#  podPriorityClass: system-cluster-critical
+
+
+## storage-minio settings
+# storage-minio:
+#  mode: standalone
+#  accessKey: "admin"
+#  secretKey: "admin1234"
+#  minioAccessSecret: "minio-secret"
+#  configPath: "/minio/.minio/"
+#  mountPath: "/export"
+#  replica: 4
+#  persistence:
+#    enabled: false
+#    useDynamicProvisioning: false
+#    storageClass: standard
+#    accessMode: ReadWriteOnce
+#    size: 10Gi
+#  service:
+#    type: ClusterIP
+#    clusterIP: None
+#    loadBalancerIP: None
+#    port: 9000
+#    nodePort: 31311
+#    prometheusEnable: false
+#    prometheusPath:   '/minio/prometheus/metrics'
+#    prometheusPort:   '9000'
+#  ingress:
+#    enabled: false
+#    annotations: {}
+#    path: /
+#    hosts: ""
+#    tls: []
+#  tls:
+#    enabled: false
+#    type: "cert-manager-generated"
+#    minioTlsSecret: ""
+#    issuerRef:
+#      name: "icp-ca-issuer"
+#      kind: "ClusterIssuer"
+#    clusterDomain: "cluster.local"
+#  nodeSelector: ""
+#  tolerations: ""
+
+{% raw %}
+## Network Settings
+## Calico Network Settings
+# calico_ipip_mode: Always
+# calico_tunnel_mtu: 1430
+# calico_ip_autodetection_method: can-reach={{ groups['master'][0] }}
+{% endraw %}
+
+## IPSec mesh Settings
+## If user wants to configure IPSec mesh, the following parameters
+## should be configured through config.yaml
+# ipsec_mesh:
+#   enable: true
+#   subnets: []
+#   exclude_ips: []
+#   cipher_suite: ""
+
+## Environment Isolation
+# Example: [{namespace: production, hostgroup: proxy-prod, lb_address: x.x.x.x}]
+# Mandatory parameters: namespace, hostgroup
+# Optional parameters: lb_address
+isolated_namespaces: []
+isolated_proxies: []
+
+# kube_apiserver_secure_port: 8001
+
+## External loadbalancer IP or domain
+## Or floating IP in OpenStack environment
+# cluster_lb_address: none
+
+## External loadbalancer IP or domain
+## Or floating IP in OpenStack environment
+# proxy_lb_address: none
+
+## Install in firewall enabled mode
+# firewall_enabled: false
+
+## Allow loopback dns server in cluster nodes
+# loopback_dns: false
+
+## High Availability Settings: etcd or keepalived
+vip_manager: etcd
+
+## High Availability Settings for master nodes
+# vip_iface: eth0
+# cluster_vip: 127.0.1.1
+
+## High Availability Settings for Proxy nodes
+# proxy_vip_iface: eth0
+# proxy_vip: 127.0.1.1
+
+## vSphere cloud provider Settings
+## If you want to configure vSphere as cloud provider, vsphere_conf
+## parameters must be configured through config.yaml
+## To create a storage class add the "storageclass" parameters,
+## as shown below.
+#
+# kubelet_nodename: hostname
+# cloud_provider: vsphere
+# vsphere_conf:
+#   user: <vCenter username for vSphere cloud provider>
+#   password: <password for vCenter user>
+#   server: <vCenter server IP or FQDN>
+#   port: [vCenter Server Port; default: 443]
+#   insecure_flag: [set to 1 if vCenter uses a self-signed certificate]
+#   datacenter: <datacenter name on which Node VMs are deployed>
+#   datastore: <default datastore to be used for provisioning volumes>
+#   storageclass:
+#     name: vsphere
+#     create: true
+#     isdefault: false
+#     provisionerparams:
+#       diskformat: thin
+#       fstype: ext3
+
+## You can disable following services if they are not needed
+## Disabling services may impact the installation of IBM CloudPaks.
+## Proceed with caution and refer to the Knowledge Center document for specific considerations.
+#   custom-metrics-adapter
+#   image-security-enforcement
+#   istio
+#   metering
+#   logging
+#   monitoring
+#   service-catalog
+#   storage-minio
+#   storage-glusterfs
+#   vulnerability-advisor
+#   node-problem-detector-draino
+#   multicluster-hub
+#   multicluster-endpoint
+
+management_services:
+  istio: disabled
+  vulnerability-advisor: disabled
+  storage-glusterfs: disabled
+  storage-minio: disabled
+  platform-security-netpols: disabled
+  node-problem-detector-draino: disabled
+  multicluster-endpoint: disabled
+  kmsplugin: disabled
+
+## Docker configuration option, more options see
+## https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file
+docker_config:
+  log-opts:
+    max-size: "100m"
+    max-file: "10"
+
+{% raw %}
+## Docker environment setup
+# docker_env:
+#   - HTTP_PROXY=http://1.2.3.4:3128
+#   - HTTPS_PROXY=http://1.2.3.4:3128
+#   - NO_PROXY=localhost,127.0.0.1,{{ cluster_CA_domain }}
+{% endraw %}
+
+## Install/upgrade docker version
+# docker_version: 18.06.2
+
+## Install Docker automatically or not
+# install_docker: true
+
+{% raw %}
+## Nginx Ingress Controller configuration
+## You can add your nginx ingress controller configuration, and the allowed configuration can refer to
+## https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/
+## Section ingress_controller is obsolete, it is replaced by nginx-ingress.
+# nginx-ingress:
+#   ingress:
+#     config:
+#       disable-access-log: 'true'
+#       keep-alive-requests: '10000'
+#       upstream-keepalive-connections: '64'
+#       worker-processes: "2"
+#     extraArgs:
+#       publish-status-address: "{{ proxy_external_address }}"
+#       enable-ssl-passthrough: true
+{% endraw %}
+
+## Clean metrics indices in Elasticsearch older than this number of days
+# metrics_max_age: 1
+
+## Clean application log indices in Elasticsearch older than this number of days
+# logs_maxage: 1
+
+## Set to false if user wants to install the full functionality of IBM Multicloud Manager hub
+# single_cluster_mode: true
+
+## Istio addons security Settings
+## If user wants to configure Istio addons securty settings
+## parameters should be configured through config.yaml
+# istio_addon:
+#   grafana:
+#     username: admin
+#     passphrase: admin
+#   kiali:
+#     username: admin
+#     passphrase: admin
+
+## MongoDB Security Settings
+## If user wants to configure MongoDB securty settings
+## parameters should be configured through config.yaml
+# mongodb_credentials:
+#  admin_user: admin
+#  admin_password:
+
+{% raw %}
+## multicluster-endpoint Settings
+## If user wants to configure multicluster-endpoint settings
+## parameters should be configured through config.yaml
+# multicluster-endpoint:
+#   global:
+#     clusterName: "{{ cluster_name }}"
+#     clusterNamespace: "{{ cluster_name }}"
+#   clusterLabels:
+#     environment: "Dev"
+#     region: "US"
+#     datacenter: "toronto"
+#     owner: "marketing"
+#   operator:
+#     bootstrapConfig:
+#       hub0:
+#         name: hub0
+#         secret: kube-system/klusterlet-bootstrap
+#       hub1:
+#         name: null
+#         secret: null
+#   klusterlet:
+#     host: null
+#   prometheusIntegration:
+#     enabled: true
+#   policy:
+#     cemIntegration: false
+#   topology:
+#     enabled: true
+#   serviceRegistry:
+#     enabled: true
+#     dnsSuffix: "mcm.svc"
+#     plugins: "kube-service"
+{% endraw %}
+
+calico:
+  calico_config:
+    calico_pod_mtu: '1500'
+
+auth-idp:
+  platform_auth:
+    resources:
+      limits:
+        memory: 2500Mi
+  identity_manager:
+    resources:
+      limits:
+        memory: 2500Mi
+  identity_provider:
+    resources:
+      limits:
+        memory: 2500Mi
+  icp_audit:
+    resources:
+      limits:
+        memory: 1000Mi
+auth-pap:
+  auth_pap:
+    resources:
+      limits:
+        memory: 2500Mi
+  icp_audit:
+    resources:
+      limits:
+        memory: 1000Mi
+logging:
+  logstash:
+    memoryLimit: 3000Mi
+    probe:
+      resources:
+        limits:
+          memory: 512Mi
+  elasticsearch:
+    client:
+      memoryLimit: 3000Mi
+    curator:
+      resources:
+        limits:
+          memory: 1000Mi
+    master:
+      memoryLimit: 3000Mi
+    data:
+      memoryLimit: 4500Mi
+    pkiInitImage:
+      resources:
+        limits:
+          memory: 1000Mi
+    pluginInitImage:
+      resources:
+        limits:
+          memory: 1000Mi
+    routerImage:
+      resources:
+        limits:
+          memory: 512Mi
+  filebeat:
+    resources:
+      limits:
+        memory: 1000Mi
+  kibana:
+    init:
+      resources:
+        limits:
+          memory: 1000Mi
+    memoryLimit: 3000Mi
+    routerImage:
+      resources:
+        limits:
+          memory: 512Mi
+  search:
+    collector:
+      resources:
+        limits:
+          memory: 512Mi
+monitoring:
+  prometheus:
+    resources:
+      limits:
+        memory: 3000Mi
+  alertmanager:
+    resources:
+      limits:
+        memory: 1000Mi
+  grafana:
+    resources:
+      limits:
+        memory: 2000Mi
+  dashboardController:
+    resources:
+      limits:
+        memory: 512Mi
+  router:
+    resources:
+      limits:
+        memory: 512Mi
+helm-api:
+  helmapi:
+    resources:
+      limits:
+        memory: 1000Mi
+  rudder:
+    resources:
+      limits:
+        memory: 1000Mi
+  auditService:
+    resources:
+      limits:
+        memory: 1000Mi
+helm-repo:
+  helmrepo:
+    resources:
+      limits:
+        memory: 1500Mi
+  auditService:
+    resources:
+      limits:
+        memory: 1000Mi
+mgmt-repo:
+  mgmtrepo:
+    resources:
+      limits:
+        memory: 1000Mi
+  auditService:
+    resources:
+      limits:
+        memory: 1000Mi
+platform-api:
+  platformApi:
+    resources:
+      limits:
+        memory: 1000Mi
+  platformDeploy:
+    resources:
+      limits:
+        memory: 1000Mi
+platform-ui:
+  resources:
+    limits:
+      memory: 1000Mi
+image-security-enforcement:
+  resources:
+    limits:
+      memory: 1000Mi
+catalog-ui:
+  catalogui:
+    resources:
+      limits:
+        memory: 1000Mi
+service-catalog:
+  service_catalog:
+    apiserver:
+      resources:
+        limits:
+          memory: 1000Mi
+    controllerManager:
+      resources:
+        limits:
+          memory: 1000Mi
+system-healthcheck-service:
+  system-healthcheck-service:
+    resources:
+      limits:
+        memory: 1000Mi
+
+nginx-ingress:
+  ingress:
+    config:
+      worker-processes: "24"
+
+cert-manager:
+  resources:
+    limits:
+      memory: 512Mi
+
+mongodb:
+  metrics:
+    resources:
+      limits:
+        memory: 1000Mi
+
+vulnerability-advisor:
+  auditService:
+    resources:
+      limits:
+        memory: 1024Mi
+  complianceAnnotator:
+    resources:
+      limits:
+        memory: 1024Mi
+  complianceIndexer:
+    resources:
+      limits:
+        memory: 1024Mi
+  configParser:
+    resources:
+      limits:
+        memory: 1024Mi
+  cosIndexer:
+    resources:
+      limits:
+        memory: 1024Mi
+  liveCrawler:
+    resources:
+      limits:
+        memory: 1024Mi
+  maMCMcontroller:
+    resources:
+      limits:
+        memory: 1024Mi
+  mafileAnnotator:
+    resources:
+      limits:
+        memory: 1024Mi
+  mafileWhitelist:
+    resources:
+      limits:
+        memory: 1024Mi
+  minioCleaner:
+    resources:
+      limits:
+        memory: 1024Mi
+  passwordAnnotator:
+    resources:
+      limits:
+        memory: 1024Mi
+  processmaAnnotator:
+    resources:
+      limits:
+        memory: 1024Mi
+  processmaAnnotatorInit:
+    resources:
+      limits:
+        memory: 1024Mi
+  processmaCrawler:
+    resources:
+      limits:
+        memory: 1024Mi
+  processmaWhitelist:
+    resources:
+      limits:
+        memory: 1024Mi
+  registryCrawler:
+    resources:
+      limits:
+        memory: 1024Mi
+  rootkitAnnotator:
+    resources:
+      limits:
+        memory: 3072Mi
+  rootkitIndexer:
+    resources:
+      limits:
+        memory: 1024Mi
+  sasApiserver:
+    resources:
+      limits:
+        memory: 1024Mi
+  secconfigAnnotator:
+    resources:
+      limits:
+        memory: 1024Mi
+  secconfigIndexer:
+    resources:
+      limits:
+        memory: 1024Mi
+  statsd:
+    resources:
+      limits:
+        memory: 1024Mi
+  usncrawler:
+    resources:
+      limits:
+        memory: 1024Mi
+  vulnerabilityAnnotator:
+    resources:
+      limits:
+        memory: 1024Mi
+  vulnerabilityIndexer:
+    resources:
+      limits:
+        memory: 1024Mi
+  watcherReloader:
+    resources:
+      limits:
+        memory: 1024Mi

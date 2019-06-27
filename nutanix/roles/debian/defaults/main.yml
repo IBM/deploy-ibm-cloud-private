@@ -14,5 +14,4 @@
 # Author: Marcelo Perazolo <mperazol@us.ibm.com>
 #---
 
-    - name: subscribe
-      include_tasks: subscribe.yml
+# Debian defaults

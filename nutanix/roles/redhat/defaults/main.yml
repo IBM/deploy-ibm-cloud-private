@@ -14,7 +14,7 @@
 # Author: Marcelo Perazolo <mperazol@us.ibm.com>
 #---
 
-# RHEL settings
+# RedHat defaults
 
 certificate_url: "my_cert_rpm"
 

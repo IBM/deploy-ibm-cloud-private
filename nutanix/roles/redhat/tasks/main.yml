@@ -14,24 +14,8 @@
 # Author: Marcelo Perazolo <mperazol@us.ibm.com>
 #---
 
-# OS-dependent settings
+    - name: subscribe
+      include_tasks: subscribe.yml
 
-certificate: "my_cert"
-certificate_url: "my_cert_rpm"
-registration_key: "my_reg_key"
-
-repos:
-  - "rpms"
-  - "optional-rpms"
-  - "supplementary-rpms"
-  - "extras-rpms"
-
-extra_repos:
-  - "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
-
-packages:
-  - "python-pip"
-  - "ca-certificates.noarch"
-  - "curl"
-  - "wget"
-  - "socat"
+    - name: configure
+      include_tasks: configure.yml

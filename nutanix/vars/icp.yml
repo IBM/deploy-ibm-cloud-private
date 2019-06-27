@@ -22,14 +22,14 @@ do_verbose: False
 icp_conf: "/opt/icp"
 
 # version of icp to install
-icp_version: "3.1.1"
+icp_version: "3.2.0"
 
 # version of inception image... use "-ee" suffix for enterprise edition
 icp_inception_version: "{{ icp_version }}-ee"
 
 # location of icp images to use
-icp_image_x86: "/opt/icp-images/ibm-cloud-private-x86_64-3.1.1.tar.gz"
-icp_image_ppc: "/opt/icp-images/ibm-cloud-private-ppc64le-3.1.1.tar.gz"
+icp_image_x86: "/images/icp/ibm-cloud-private-x86_64-3.2.0.tar.gz"
+icp_image_ppc: "/images/icp/ibm-cloud-private-ppc64le-3.2.0.tar.gz"
 
 # arch of target nodes... use "amd64" for x86, "ppc64le" for power
 icp_target_arch: "ppc64le"

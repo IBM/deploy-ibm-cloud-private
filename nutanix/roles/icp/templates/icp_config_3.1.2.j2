@@ -1,10 +1,18 @@
+---
 ###
+#
+# {{ ansible_managed }}
 #
 # WARNING:
 #   Some comments are encased by Jinja2 raw-endraw blocks to avoid expansion of comment content.
 #   Don't remove raw-endraw blocks unless you want Jinja2 to expand valid playbook variables.
 #
 ###
+
+# Licensed Materials - Property of IBM
+# IBM Cloud private
+# @ Copyright IBM Corp. 2017 All Rights Reserved
+# US Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
 
 ## Network Settings
 network_type: calico
@@ -34,6 +42,8 @@ etcd_extra_args: ["--grpc-keepalive-timeout=0", "--grpc-keepalive-interval=0", "
 fips_enabled: false
 
 ## Advanced Settings
+password_rules:
+  - '(.*)'
 default_admin_user: admin
 default_admin_password: admin
 # ansible_user: <username>
@@ -111,11 +121,12 @@ journal_path: /run/log/journal
 #    key: hostgroup
 #    value: glusterfs
 #  prometheus:
-#    enabled: false
+#    enabled: true
 #    path: "/metrics"
 #    port: 8080
 #  tolerations: []
 #  podPriorityClass: system-cluster-critical
+
 
 {% raw %}
 ## storage-minio settings
@@ -127,7 +138,7 @@ journal_path: /run/log/journal
 #  mode: standalone
 #  accessKey: "admin"
 #  secretKey: "admin1234"
-#  minioAccessSercret: "minio-secret"
+#  minioAccessSecret: "minio-secret"
 #  configPath: "/root/.minio/"
 #  mountPath: "/export"
 #  replica: 4
@@ -151,7 +162,7 @@ journal_path: /run/log/journal
 #  tls:
 #    enabled: false
 #    type: "selfsigned"
-#    minioTlsSercret: ""
+#    minioTlsSecret: ""
 #  nodeSelector: ""
 #  tolerations: ""
 {% endraw %}
@@ -159,7 +170,7 @@ journal_path: /run/log/journal
 {% raw %}
 ## Network Settings
 ## Calico Network Settings
-# calico_ipip_enabled: true
+# calico_ipip_mode: Always
 # calico_tunnel_mtu: 1430
 # calico_ip_autodetection_method: can-reach={{ groups['master'][0] }}
 {% endraw %}
@@ -227,16 +238,25 @@ vip_manager: etcd
 #   image-security-enforcement
 #   istio
 #   metering
+#   logging
 #   monitoring
 #   service-catalog
 #   storage-minio
 #   storage-glusterfs
 #   vulnerability-advisor
+#   node-problem-detector-draino
+#   multicluster-hub: disabled
+#   multicluster-endpoint: disabled
+
 management_services:
   istio: disabled
   vulnerability-advisor: disabled
   storage-glusterfs: disabled
   storage-minio: disabled
+  platform-security-netpols: disabled
+  node-problem-detector-draino: disabled
+  multicluster-hub: disabled
+  multicluster-endpoint: disabled
 
 ## Docker configuration option, more options see
 ## https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file
@@ -262,7 +282,7 @@ management_services:
 {% raw %}
 ## Nginx Ingress Controller configuration
 ## You can add your nginx ingress controller configuration, and the allowed configuration can refer to
-## https://github.com/kubernetes/ingress-nginx/blob/nginx-0.16.2/docs/user-guide/nginx-configuration/configmap.md
+## https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/
 ## Section ingress_controller is obsolete, it is replaced by nginx-ingress.
 # nginx-ingress:
 #   ingress:

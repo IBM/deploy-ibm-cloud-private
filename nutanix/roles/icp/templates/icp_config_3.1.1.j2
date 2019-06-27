@@ -1,0 +1,297 @@
+---
+###
+#
+# {{ ansible_managed }}
+#
+# WARNING:
+#   Some comments are encased by Jinja2 raw-endraw blocks to avoid expansion of comment content.
+#   Don't remove raw-endraw blocks unless you want Jinja2 to expand valid playbook variables.
+#
+###
+
+## Network Settings
+network_type: calico
+# network_helm_chart_path: < helm chart path >
+
+## Network in IPv4 CIDR format
+network_cidr: 10.1.0.0/16
+
+## Kubernetes Settings
+service_cluster_ip_range: 10.0.0.0/16
+
+{% raw %}
+# cluster_domain: cluster.local
+# cluster_name: mycluster
+# cluster_CA_domain: "{{ cluster_name }}.icp"
+{% endraw %}
+
+## Etcd Settings
+etcd_extra_args: ["--grpc-keepalive-timeout=0", "--grpc-keepalive-interval=0", "--snapshot-count=10000"]
+# Keep the log data separate from the etcd data.
+# You could set etcd wal dirctory to a centralized and remote log directory for persistent logging.
+# etcd_data_dir: "/var/lib/etcd"
+# etcd_wal_dir: "/var/lib/etcd-wal"
+
+## General Settings
+# wait_for_timeout: 600
+fips_enabled: false
+
+## Advanced Settings
+default_admin_user: admin
+default_admin_password: admin
+# ansible_user: <username>
+# ansible_become: true
+# ansible_become_password: <password>
+
+## Kubernetes Settings
+# kubelet_extra_args: [""]
+# kube_apiserver_extra_args: []
+# kube_controller_manager_extra_args: []
+# kube_proxy_extra_args: []
+# kube_scheduler_extra_args: []
+
+## Bootstrap token
+# bootstrap_token_ttl: "24h0m0s"
+
+
+## Enable Kubernetes Audit Log
+# auditlog_enabled: false
+
+## Audit logging settings
+journal_path: /run/log/journal
+
+## Cluster Router settings
+# router_http_port: 8080
+# router_https_port: 8443
+
+## Nginx Ingress settings
+# ingress_http_port: 80
+# ingress_https_port: 443
+
+## GlusterFS Storage Settings
+# storage-glusterfs:
+#  nodes:
+#    - ip: <storage_node_m_IP_address>
+#      devices:
+#        - <link path>/<symlink of device aaa>
+#        - <link path>/<symlink of device bbb>
+#    - ip: <storage_node_n_IP_address>
+#      devices:
+#        - <link path>/<symlink of device ccc>
+#    - ip: <storage_node_o_IP_address>
+#      devices:
+#        - <link path>/<symlink of device ddd>
+#  storageClass:
+#    create: true
+#    name: glusterfs
+#    isDefault: false
+#    volumeType: replicate:3
+#    reclaimPolicy: Delete
+#    volumeBindingMode: Immediate
+#    volumeNamePrefix: icp
+#    additionalProvisionerParams: {}
+#    allowVolumeExpansion: true
+#  gluster:
+#    resources:
+#      requests:
+#        cpu: 500m
+#        memory: 512Mi
+#      limits:
+#        cpu: 1000m
+#        memory: 1Gi
+#  heketi:
+#    backupDbSecret: heketi-db-backup
+#    authSecret: heketi-secret
+#    maxInFlightOperations: 20
+#    resources:
+#      requests:
+#        cpu: 500m
+#        memory: 512Mi
+#      limits:
+#        cpu: 1000m
+#        memory: 1Gi
+#  nodeSelector:
+#    key: hostgroup
+#    value: glusterfs
+#  prometheus:
+#    enabled: false
+#    path: "/metrics"
+#    port: 8080
+#  tolerations: []
+#  podPriorityClass: system-cluster-critical
+
+{% raw %}
+## storage-minio settings
+# storage-minio:
+#  image:
+#    repository: "{{ image_repo }}/minio"
+#  mcImage:
+#    repository: "{{ image_repo }}/minio-mc"
+#  mode: standalone
+#  accessKey: "admin"
+#  secretKey: "admin1234"
+#  minioAccessSercret: "minio-secret"
+#  configPath: "/root/.minio/"
+#  mountPath: "/export"
+#  replica: 4
+#  persistence:
+#    enabled: false
+#    useDynamicProvisioning: false
+#    storageClass: standard
+#    accessMode: ReadWriteOnce
+#    size: 10Gi
+#  service:
+#    type: ClusterIP
+#    clusterIP: None
+#    loadBalancerIP: None
+#    port: 9000
+#    nodePort: 31311
+#  ingress:
+#    enabled: false
+#    path: /
+#    hosts: ""
+#    tls: ""
+#  tls:
+#    enabled: false
+#    type: "selfsigned"
+#    minioTlsSercret: ""
+#  nodeSelector: ""
+#  tolerations: ""
+{% endraw %}
+
+{% raw %}
+## Network Settings
+## Calico Network Settings
+# calico_ipip_enabled: true
+# calico_tunnel_mtu: 1430
+# calico_ip_autodetection_method: can-reach={{ groups['master'][0] }}
+{% endraw %}
+
+## IPSec mesh Settings
+## If user wants to configure IPSec mesh, the following parameters
+## should be configured through config.yaml
+# ipsec_mesh:
+#   enable: true
+#   subnets: []
+#   exclude_ips: []
+#   cipher_suite: ""
+
+## Environment Isolation
+# Example: [{namespace: production, hostgroup: proxy-prod, lb_address: x.x.x.x}]
+# Mandatory parameters: namespace, hostgroup
+# Optional parameters: lb_address
+isolated_namespaces: []
+isolated_proxies: []
+
+# kube_apiserver_secure_port: 8001
+
+## External loadbalancer IP or domain
+## Or floating IP in OpenStack environment
+# cluster_lb_address: none
+
+## External loadbalancer IP or domain
+## Or floating IP in OpenStack environment
+# proxy_lb_address: none
+
+## Install in firewall enabled mode
+# firewall_enabled: false
+
+## Allow loopback dns server in cluster nodes
+# loopback_dns: false
+
+## High Availability Settings: etcd or keepalived
+vip_manager: etcd
+
+## High Availability Settings for master nodes
+# vip_iface: eth0
+# cluster_vip: 127.0.1.1
+
+## High Availability Settings for Proxy nodes
+# proxy_vip_iface: eth0
+# proxy_vip: 127.0.1.1
+
+## vSphere cloud provider Settings
+## If user wants to configure vSphere as cloud provider, vsphere_conf
+## parameters should be configured through config.yaml
+# kubelet_nodename: hostname
+# cloud_provider: vsphere
+# vsphere_conf:
+#    user: <vCenter username for vSphere cloud provider>
+#    password: <password for vCenter user>
+#    server: <vCenter server IP or FQDN>
+#    port: [vCenter Server Port; default: 443]
+#    insecure_flag: [set to 1 if vCenter uses a self-signed certificate]
+#    datacenter: <datacenter name on which Node VMs are deployed>
+#    datastore: <default datastore to be used for provisioning volumes>
+#    working_dir: <vCenter VM folder path in which node VMs are located>
+
+## You can disable following services if they are not needed:
+#   custom-metrics-adapter
+#   image-security-enforcement
+#   istio
+#   metering
+#   monitoring
+#   service-catalog
+#   storage-minio
+#   storage-glusterfs
+#   vulnerability-advisor
+management_services:
+  istio: disabled
+  vulnerability-advisor: disabled
+  storage-glusterfs: disabled
+  storage-minio: disabled
+
+## Docker configuration option, more options see
+## https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file
+# docker_config:
+#   log-opts:
+#     max-size: "100m"
+#     max-file: "10"
+
+{% raw %}
+## Docker environment setup
+# docker_env:
+#   - HTTP_PROXY=http://1.2.3.4:3128
+#   - HTTPS_PROXY=http://1.2.3.4:3128
+#   - NO_PROXY=localhost,127.0.0.1,{{ cluster_CA_domain }}
+{% endraw %}
+
+## Install/upgrade docker version
+# docker_version: 18.03.1
+
+## Install Docker automatically or not
+# install_docker: true
+
+{% raw %}
+## Nginx Ingress Controller configuration
+## You can add your nginx ingress controller configuration, and the allowed configuration can refer to
+## https://github.com/kubernetes/ingress-nginx/blob/nginx-0.16.2/docs/user-guide/nginx-configuration/configmap.md
+## Section ingress_controller is obsolete, it is replaced by nginx-ingress.
+# nginx-ingress:
+#   ingress:
+#     config:
+#       disable-access-log: 'true'
+#       keep-alive-requests: '10000'
+#       upstream-keepalive-connections: '64'
+#       worker-processes: "2"
+#     extraArgs:
+#       publish-status-address: "{{ proxy_external_address }}"
+#       enable-ssl-passthrough: true
+{% endraw %}
+
+## Clean metrics indices in Elasticsearch older than this number of days
+# metrics_max_age: 1
+
+## Clean application log indices in Elasticsearch older than this number of days
+# logs_maxage: 1
+
+## Istio addons security Settings
+## If user wants to configure Istio addons securty settings
+## parameters should be configured through config.yaml
+# istio_addon:
+#   grafana:
+#     username: admin
+#     passphrase: admin
+#   kiali:
+#     username: admin
+#     passphrase: admin

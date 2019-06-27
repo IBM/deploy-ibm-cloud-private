@@ -18,3 +18,8 @@
 
 packages:
   - "python-pip"
+  - "ca-certificates"
+  - "curl"
+  - "wget"
+  - "socat"
+  

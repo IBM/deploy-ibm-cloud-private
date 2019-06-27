@@ -14,24 +14,8 @@
 # Author: Marcelo Perazolo <mperazol@us.ibm.com>
 #---
 
-# OS-dependent settings
-
-certificate: "my_cert"
-certificate_url: "my_cert_rpm"
-registration_key: "my_reg_key"
-
-repos:
-  - "rpms"
-  - "optional-rpms"
-  - "supplementary-rpms"
-  - "extras-rpms"
-
-extra_repos:
-  - "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
-
-packages:
-  - "python-pip"
-  - "ca-certificates.noarch"
-  - "curl"
-  - "wget"
-  - "socat"
+    - name: set max_map_count
+      shell: |
+        /sbin/sysctl -w vm.max_map_count=262144
+        /bin/echo "vm.max_map_count=262144" | /usr/bin/tee -a /etc/sysctl.conf
+        
