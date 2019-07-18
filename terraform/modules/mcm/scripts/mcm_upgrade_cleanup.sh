@@ -20,7 +20,6 @@
 # Copyright (C) 2019 IBM Corporation
 #
 # Yussuf Shaikh <yussuf@us.ibm.com> - Initial implementation.
-# Yussuf Shaikh <yussuf@us.ibm.com> - Seperated loading charts and install.
 #
 ################################################################
 
@@ -34,18 +33,20 @@ function clean_mcm {
     cloudctl login -a https://${HUB_CLUSTER_IP}:8443 --skip-ssl-validation \
         -u ${icp_admin_user} -p ${icp_admin_user_password} -n kube-system
 
-    export MCM_HELM_RELEASE_NAME=mcm-release
+    export MCM_HELM_RELEASE_NAME=multicluster-hub
     helm del --purge ${MCM_HELM_RELEASE_NAME} --timeout 1800 --tls
     kubectl delete pod --grace-period=0 --force --namespace kube-system \
         -l release=${MCM_HELM_RELEASE_NAME}
 
-    export MCMK_HELM_RELEASE_NAME=mcmk-release
+    export MCMK_HELM_RELEASE_NAME=multicluster-klusterlet
     helm del --purge ${MCMK_HELM_RELEASE_NAME} --timeout 1800 --tls
     kubectl delete pod --grace-period=0 --force --namespace kube-system \
         -l release=${MCMK_HELM_RELEASE_NAME}
 
+    kubectl delete secret klusterlet-bootstrap -n kube-system
     kubectl delete namespace ${mcm_namespace}
-    kubectl delete namespace ${mcm_namespace}k
+
+    rm -f /tmp/kubeconfig
 }
 
 

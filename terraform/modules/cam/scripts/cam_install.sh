@@ -76,13 +76,6 @@ function add_ibm_chart_repos {
 
 # Install and configure exportfs; Create Persistent Volumes
 function create_persistent_volumes {
-    if [ -f /etc/redhat-release ]; then
-        sudo yum -y install nfs-utils
-    elif [ -f /etc/SuSE-release ]; then
-        sudo zypper -n install nfs-kernel-server
-    else
-        sudo apt-get -y install nfs-kernel-server
-    fi
     sudo mkdir -p /cam_export/
     sudo sed -i '/\/cam_export*/d' /etc/exports
     echo "/cam_export *(rw,insecure,no_subtree_check,async,no_root_squash)" | sudo tee -a /etc/exports &> /dev/null
@@ -155,7 +148,6 @@ function install_cam {
 }
 
 
-/bin/echo "/tmp/cam_install.sh " $*
 METHOD=$1
 HUB_CLUSTER_IP=$2
 VERSION=$3

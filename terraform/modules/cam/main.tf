@@ -42,12 +42,6 @@ resource "null_resource" "cam_install" {
         bastion_host  = "${var.bastion_host}"
     }
 
-    provisioner "remote-exec" {
-        when = "destroy"
-        inline = [
-          "echo destroy"
-        ]
-    }
     provisioner "file" {
         source = "${path.module}/scripts/cam_install.sh"
         destination = "/tmp/cam_install.sh"

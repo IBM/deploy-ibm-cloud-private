@@ -16,9 +16,9 @@
 
 # OS-dependent settings
 
-certificate: "my_cert"
-certificate_url: "my_cert_rpm"
-registration_key: "my_reg_key"
+certificate_url: "replace_with_url_of_your_cerfificate_host"
+certificate: "replace_with_your_certificate_name"
+registration_key: "replace_with_your_registration_key"
 
 repos:
   - "rpms"
@@ -35,3 +35,4 @@ packages:
   - "curl"
   - "wget"
   - "socat"
+

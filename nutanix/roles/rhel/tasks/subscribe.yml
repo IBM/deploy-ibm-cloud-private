@@ -1,0 +1,57 @@
+---
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Author: Marcelo Perazolo <mperazol@us.ibm.com>
+#---
+
+    - name: install certificate
+      shell: rpm -q "{{ certificate }}" || rpm -Uv "{{ certificate_url }}" warn=False
+
+    - name: subscription config
+      command: subscription-manager config
+
+    - name: subscription register
+      command: subscription-manager register --org Default_Organization --activationkey="{{ registration_key }}" --force
+
+    - name: disable all existing repos
+      command: subscription-manager repos --disable="*"
+
+    - name: check machine arch to determine repo names
+      set_fact:
+        repo_arch: "{{ target.label }}"
+      when: ansible_architecture == target.arch
+      loop:
+        - { arch: 'x86_84',  label: 'server' }
+        - { arch: 'ppc64le', label: 'for-power-le' }
+      loop_control:
+        loop_var: target
+        label: "{{ target.arch }}"
+
+    - name: enable rhel repos
+      command: subscription-manager repos --enable="rhel-{{ ansible_distribution_major_version }}-{{ repo_arch }}-{{ repo_name }}"
+      when: repo_arch is defined
+      loop: "{{ repos }}"
+      loop_control:
+        loop_var: repo_name
+        label: "rhel-{{ ansible_distribution_major_version }}-{{ repo_arch }}-{{ repo_name }}"
+
+    - name: install extra repos
+      yum:
+        name: "{{ extra }}"
+        state: present
+      when: repo_arch is defined
+      loop: "{{ extra_repos }}"
+      loop_control:
+        loop_var: extra
+        label: "{{ extra }}"
+        

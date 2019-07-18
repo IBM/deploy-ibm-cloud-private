@@ -19,9 +19,7 @@
 #
 # Copyright (C) 2019 IBM Corporation
 #
-# Yussuf Shaikh <yussuf@us.ibm.com> - Initial implementation.
-# Yussuf Shaikh <yussuf@us.ibm.com> - Seperated loading charts and install.
-# Yussuf Shaikh <yussuf@us.ibm.com> - Allow Klusterlet only install.
+# Yussuf Shaikh <yussuf@us.ibm.com> - Initial implementation for ICP 3.2.0 and above.
 #
 ################################################################
 
@@ -37,17 +35,21 @@ function init_mcm {
     helm init --client-only
     cloudctl login -a https://${HUB_CLUSTER_IP}:8443 --skip-ssl-validation \
         -u ${icp_admin_user} -p ${icp_admin_user_password} -n kube-system
+    helm repo add mgmt-charts \
+        https://${HUB_CLUSTER_IP}:8443/mgmt-repo/charts \
+        --ca-file ~/.helm/ca.pem \
+        --cert-file ~/.helm/cert.pem \
+        --key-file ~/.helm/key.pem
 }
 
 # Install MultiCloud Manager
 function install_mcm {
-    CHARTNAME=local-charts/ibm-mcm-prod
-    kubectl create namespace ${mcm_namespace}
-
-    export MCM_HELM_RELEASE_NAME=mcm-release
+    CHARTNAME=mgmt-charts/ibm-mcm-prod
+    export MCM_HELM_RELEASE_NAME=multicluster-hub
     helm upgrade --install ${MCM_HELM_RELEASE_NAME} \
         --timeout 1800 --namespace kube-system \
         --set compliance.mcmNamespace=${mcm_namespace} \
+        --set tillerIntegration.user=${icp_admin_user} \
         --set topology.enabled=true \
         ${CHARTNAME} --tls \
         --ca-file ~/.helm/ca.pem \
@@ -62,23 +64,31 @@ function install_mcm {
         jsonpath="{.clusters[?(@.name==\"${cluster_name}\")].cluster.server}"`
     HUB_CLUSTER_TOKEN=`kubectl config view -o \
         jsonpath="{.users[?(@.name==\"${cluster_name}-user\")].user.token}"`
-    mcm_namespace=${mcm_namespace}k
 }
 
 # Install MCM Klusterlet
 function install_mcm_klusterlet {
-    CHARTNAME=local-charts/ibm-mcmk-prod
     kubectl create namespace ${mcm_namespace}
+    export KUBECONFIG=/tmp/kubeconfig
+    kubectl config set-cluster ${cluster_name} --server=${HUB_CLUSTER_URL} --insecure-skip-tls-verify=true
+    kubectl config set-context ${cluster_name}-context --cluster=${cluster_name}
+    kubectl config set-credentials ${icp_admin_user} --token=${HUB_CLUSTER_TOKEN}
+    kubectl config set-context ${cluster_name}-context --user=${icp_admin_user} --namespace=default
+    kubectl config use-context ${cluster_name}-context
+    unset KUBECONFIG
 
-    export MCMK_HELM_RELEASE_NAME=mcmk-release
+    kubectl create secret generic klusterlet-bootstrap -n kube-system --from-file=/tmp/kubeconfig
+
+    CHARTNAME=mgmt-charts/ibm-klusterlet
+    export MCMK_HELM_RELEASE_NAME=multicluster-klusterlet
+    helm del --purge ${MCMK_HELM_RELEASE_NAME} --tls
     helm upgrade --install ${MCMK_HELM_RELEASE_NAME} \
         --timeout 1800 --namespace kube-system \
         --set klusterlet.enabled=true \
-        --set klusterlet.clusterName=${klusterlet_name} \
-        --set klusterlet.clusterNamespace=${mcm_namespace} \
-        --set klusterlet.autoGenTillerSecret=true \
-        --set klusterlet.apiserverConfig.server=${HUB_CLUSTER_URL} \
-        --set klusterlet.apiserverConfig.token=${HUB_CLUSTER_TOKEN} \
+        --set global.clusterName=${klusterlet_name} \
+        --set global.clusterNamespace=${mcm_namespace} \
+        --set tillerIntegration.user=${icp_admin_user} \
+        --set tillerIntegration.autoGenTillerSecret=true \
         ${CHARTNAME} --tls \
         --ca-file ~/.helm/ca.pem \
         --cert-file ~/.helm/cert.pem \
@@ -89,32 +99,21 @@ function install_mcm_klusterlet {
     fi
 }
 
-# Install CLI
-function install_mcm_cli {
-    docker run -e LICENSE=accept -v /usr/local/bin:/data \
-        ${cluster_name}.icp:8500/kube-system/mcmctl:${ICP_VERSION} \
-        cp mcmctl-linux-${systemArch} /data/mcmctl
-}
-
-
 HUB_CLUSTER_IP=$1
-ICP_VERSION=$2
-icp_admin_user=$3
-icp_admin_user_password=$4
-KLUSTERLET_ONLY=$5
+icp_admin_user=$2
+icp_admin_user_password=$3
+KLUSTERLET_ONLY=$4
 cluster_name=mycluster
-klusterlet_name=$6
-mcm_namespace=$7
-HUB_CLUSTER_URL=$8
-HUB_CLUSTER_TOKEN=$9
+klusterlet_name=$5
+mcm_namespace=$6
+HUB_CLUSTER_URL=$7
+HUB_CLUSTER_TOKEN=$8
 
 /bin/echo
 /bin/echo "Installing MCM.."
-
 init_mcm
 if [ "${KLUSTERLET_ONLY}" == "false" ]; then
     install_mcm
 fi
 install_mcm_klusterlet
-install_mcm_cli
 /bin/echo "MCM installation completed"

@@ -20,8 +20,27 @@
 # Copyright (C) 2019 IBM Corporation
 #
 # Yussuf Shaikh <yussuf@us.ibm.com> - Initial implementation.
+# Yussuf Shaikh <yussuf@us.ibm.com> - Common file for PowerVC & Openstack bootstrap.
 #
 ################################################################
+
+# Allow SMT levels to be set for the master node
+if [ ! -z "${smt_value_master}" ] && [ -f /usr/sbin/ppc64_cpu ]; then
+    /usr/sbin/ppc64_cpu --smt=${smt_value_master}
+    cat >> /etc/systemd/system/smt.service <<EOL
+[Unit]
+Description=Set SMT
+After=syslog.target
+[Service]
+Type=simple
+ExecStart=/usr/sbin/ppc64_cpu --smt=${smt_value_master}
+TimeoutSec=300
+[Install]
+WantedBy=multi-user.target
+EOL
+    /bin/systemctl daemon-reload
+    /bin/systemctl enable smt.service
+fi
 
 # Enable NTP
 /usr/bin/timedatectl set-ntp on
@@ -29,13 +48,18 @@
 /sbin/sysctl -w vm.max_map_count=262144
 /bin/echo "vm.max_map_count=262144" | /usr/bin/tee -a /etc/sysctl.conf
 
+/bin/sed -i "/^manage_etc_hosts/d" /etc/cloud/cloud.cfg
+/bin/echo "manage_etc_hosts: false" | /usr/bin/tee -a /etc/cloud/cloud.cfg
+
+
+# Pre-install Docker
 if [ -f /etc/redhat-release ]; then
     # Disable the firewall
     systemctl stop firewalld
     systemctl disable firewalld
     # Make sure we're not running some old version of docker
     yum -y remove docker docker-engine docker.io
-    yum -y install moreutils
+    yum -y install socat moreutils nfs-utils
     # Either install the icp docker version or from the repo
     if [ ! -z ${docker_download_location} ]; then
         TMP_DIR="$(/bin/mktemp -d)"
@@ -52,7 +76,7 @@ elif [ -f /etc/SuSE-release ]; then
     systemctl stop SuSEfirewall2
     systemctl disable SuSEfirewall2
     zypper -n remove docker docker-engine docker.io
-    zypper -n install moreutils
+    zypper -n install socat moreutils nfs-kernel-server
     if [ ! -z ${docker_download_location} ]; then
         TMP_DIR="$(/bin/mktemp -d)"
         cd "$TMP_DIR"
@@ -72,8 +96,9 @@ else
     /usr/bin/apt-get --assume-yes purge docker
     /usr/bin/apt-get --assume-yes purge docker-engine
     /usr/bin/apt-get --assume-yes purge docker.io
-    /usr/bin/apt-get --assume-yes install apt-transport-https moreutils\
-    ca-certificates curl software-properties-common python python-pip
+    /usr/bin/apt-get --assume-yes install apt-transport-https moreutils \
+    ca-certificates curl software-properties-common python python-pip \
+    nfs-kernel-server
     if [ ! -z ${docker_download_location} ]; then
         TMP_DIR="$(/bin/mktemp -d)"
         cd "$TMP_DIR"

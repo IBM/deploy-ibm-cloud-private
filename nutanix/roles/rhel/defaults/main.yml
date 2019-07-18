@@ -14,12 +14,17 @@
 # Author: Marcelo Perazolo <mperazol@us.ibm.com>
 #---
 
-# OS-dependent settings
+# RHEL settings
 
-packages:
-  - "python-pip"
-  - "ca-certificates"
-  - "curl"
-  - "wget"
-  - "socat"
+certificate_url: "my_cert_rpm"
 
+registration_key: "my_registration_key"
+
+repos:
+  - "rpms"
+  - "optional-rpms"
+  - "supplementary-rpms"
+  - "extras-rpms"
+
+extra_repos:
+  - "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"

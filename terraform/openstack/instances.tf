@@ -30,6 +30,8 @@ resource "openstack_compute_instance_v2" "icp_master_vm" {
     image_id  = "${var.openstack_image_id}"
     flavor_id = "${var.openstack_master_node["flavor_id"]}"
     key_pair  = "${openstack_compute_keypair_v2.icp-key-pair.name}"
+    security_groups   = ["${var.openstack_security_groups}"]
+    availability_zone = "${var.openstack_availability_zone}"
     network {
         name = "${var.openstack_network_name}"
     }
@@ -51,6 +53,7 @@ resource "null_resource" "wait_for_master" {
             user        = "${var.icp_install_user}"
             private_key = "${file(var.openstack_ssh_key_file)}"
             agent       = "false"
+            bastion_host = "${openstack_compute_floatingip_associate_v2.master_pub_ip.0.floating_ip}"
             timeout     = "15m"
         }
 
@@ -71,6 +74,8 @@ resource "openstack_compute_instance_v2" "icp_worker_vm" {
     image_id  = "${var.openstack_image_id}"
     flavor_id = "${var.openstack_worker_node["flavor_id"]}"
     key_pair  = "${openstack_compute_keypair_v2.icp-key-pair.name}"
+    security_groups   = ["${var.openstack_security_groups}"]
+    availability_zone = "${var.openstack_availability_zone}"
     network {
         name = "${var.openstack_network_name}"
     }
@@ -82,6 +87,7 @@ resource "openstack_compute_instance_v2" "icp_worker_vm" {
             user          = "${var.icp_install_user}"
             private_key   = "${file(var.openstack_ssh_key_file)}"
             agent         = "false"
+            bastion_host = "${openstack_compute_floatingip_associate_v2.master_pub_ip.0.floating_ip}"
             timeout     = "15m"
         }
 
@@ -110,6 +116,8 @@ resource "openstack_compute_instance_v2" "icp_management_vm" {
     image_id  = "${var.openstack_image_id}"
     flavor_id = "${var.openstack_management_node["flavor_id"]}"
     key_pair  = "${openstack_compute_keypair_v2.icp-key-pair.name}"
+    security_groups   = ["${var.openstack_security_groups}"]
+    availability_zone = "${var.openstack_availability_zone}"
     network {
         name = "${var.openstack_network_name}"
     }
@@ -121,6 +129,7 @@ resource "openstack_compute_instance_v2" "icp_management_vm" {
             user          = "${var.icp_install_user}"
             private_key   = "${file(var.openstack_ssh_key_file)}"
             agent         = "false"
+            bastion_host = "${openstack_compute_floatingip_associate_v2.master_pub_ip.0.floating_ip}"
             timeout     = "15m"
         }
 
@@ -141,6 +150,8 @@ resource "openstack_compute_instance_v2" "icp_proxy_vm" {
     image_id  = "${var.openstack_image_id}"
     flavor_id = "${var.openstack_proxy_node["flavor_id"]}"
     key_pair  = "${openstack_compute_keypair_v2.icp-key-pair.name}"
+    security_groups   = ["${var.openstack_security_groups}"]
+    availability_zone = "${var.openstack_availability_zone}"
     network {
         name = "${var.openstack_network_name}"
     }
@@ -152,6 +163,7 @@ resource "openstack_compute_instance_v2" "icp_proxy_vm" {
             user          = "${var.icp_install_user}"
             private_key   = "${file(var.openstack_ssh_key_file)}"
             agent         = "false"
+            bastion_host = "${openstack_compute_floatingip_associate_v2.master_pub_ip.0.floating_ip}"
             timeout     = "15m"
         }
 
@@ -172,6 +184,8 @@ resource "openstack_compute_instance_v2" "icp_va_vm" {
     image_id  = "${var.openstack_image_id}"
     flavor_id = "${var.openstack_va_node["flavor_id"]}"
     key_pair  = "${openstack_compute_keypair_v2.icp-key-pair.name}"
+    security_groups   = ["${var.openstack_security_groups}"]
+    availability_zone = "${var.openstack_availability_zone}"
     network {
         name = "${var.openstack_network_name}"
     }
@@ -183,6 +197,7 @@ resource "openstack_compute_instance_v2" "icp_va_vm" {
             user          = "${var.icp_install_user}"
             private_key   = "${file(var.openstack_ssh_key_file)}"
             agent         = "false"
+            bastion_host = "${openstack_compute_floatingip_associate_v2.master_pub_ip.0.floating_ip}"
             timeout     = "15m"
         }
 
