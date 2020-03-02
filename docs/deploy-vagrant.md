@@ -49,7 +49,7 @@ This `Vagrantfile` will stand up a single [VirtualBox](https://www.virtualbox.or
 #### Conflicting Network Segments
 If you see the addresses `192.168.56.101` or `192.168.56.102` for either `cfc-worker1` or `cfc-worker2` that means there was a conflicting network segment for the `192.168.27.x` network on your system. You will need to change the `base_segment` value in the `Vagrantfile` to a value that will not overlap any existing segments on your machine. See the comments in the `Vagrantfile` for [examples](https://github.com/IBM/deploy-ibm-cloud-private/blob/master/Vagrantfile#L24-L28)  Note that after changing `Vagrantfile` `base_segment` value you will need to halt and restart as follows:
 
-    vagrant destroy
+    vagrant halt
     vagrant up
 
 #### Web/Kube Dashboard Showing 3X Amount of Memory/CPU than I have on My Laptop
